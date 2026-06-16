@@ -12,6 +12,8 @@ import { Logger } from "../lib/logger"
 import {
     createSessionState,
     ensureSessionInitialized,
+    refreshManualMode,
+    saveManualModeSetting,
     saveSessionState,
     type WithParts,
 } from "../lib/state"
@@ -723,4 +725,22 @@ test("event hook keeps same call id distinct across message ids", async () => {
 
     assert.equal(state.prune.messages.blocksById.get(1)?.durationMs, 350)
     assert.equal(state.prune.messages.blocksById.get(2)?.durationMs, 150)
+})
+
+test("manual mode persisted setting refreshes server session state", async () => {
+    const logger = new Logger(false)
+    const sessionId = `manual-mode-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+    await saveManualModeSetting(sessionId, true, logger)
+
+    const state = createSessionState()
+    state.sessionId = sessionId
+    state.manualMode = false
+
+    await refreshManualMode(state, sessionId, logger, false)
+    assert.equal(state.manualMode, "active")
+
+    await saveManualModeSetting(sessionId, false, logger)
+    await refreshManualMode(state, sessionId, logger, true)
+    assert.equal(state.manualMode, false)
 })
