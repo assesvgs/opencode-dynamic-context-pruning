@@ -26,7 +26,7 @@ import {
 } from "./state"
 import type { CompressRangeToolArgs } from "./types"
 
-function buildSchema() {
+export function buildSchema() {
     return {
         topic: tool.schema
             .string()

@@ -242,12 +242,17 @@
                     "default": false,
                     "description": "Preserve text wrapped in <protect>...</protect> when compressed"
                 },
-                "protectUserMessages": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "When enabled, your messages are never lost during compression"
-                }
-            },
+                        "protectUserMessages": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "When enabled, your messages are never lost during compression"
+                        },
+                        "autonomousPurge": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "When enabled, AI can autonomously decide to use the purge tool for aggressive cleanup"
+                        }
+                    },
             "default": {
                 "mode": "range",
                 "permission": "allow",
@@ -260,7 +265,8 @@
                 "nudgeForce": "soft",
                 "protectedTools": [],
                 "protectTags": false,
-                "protectUserMessages": false
+                "protectUserMessages": false,
+                "autonomousPurge": false
             }
         },
         "strategies": {

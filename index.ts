@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin"
 import { getConfig } from "./lib/config"
-import { createCompressMessageTool, createCompressRangeTool } from "./lib/compress"
+import { createCompressMessageTool, createCompressRangeTool, createPurgeTool } from "./lib/compress"
 import {
     compressDisabledByOpencode,
     hasExplicitToolPermission,
@@ -84,6 +84,9 @@ const server: Plugin = (async (ctx) => {
                     config.compress.mode === "message"
                         ? createCompressMessageTool(compressToolContext)
                         : createCompressRangeTool(compressToolContext),
+                ...(config.compress.autonomousPurge && {
+                    purge: createPurgeTool(compressToolContext),
+                }),
             }),
         },
         config: async (opencodeConfig) => {
@@ -122,6 +125,9 @@ const server: Plugin = (async (ctx) => {
             const toolsToAdd: string[] = []
             if (config.compress.permission !== "deny" && !config.experimental.allowSubAgents) {
                 toolsToAdd.push("compress")
+                if (config.compress.autonomousPurge) {
+                    toolsToAdd.push("purge")
+                }
             }
 
             if (toolsToAdd.length > 0) {

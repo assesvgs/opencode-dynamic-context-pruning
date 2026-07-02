@@ -27,6 +27,7 @@ export interface CompressConfig {
     protectedTools: string[]
     protectTags: boolean
     protectUserMessages: boolean
+    autonomousPurge: boolean
 }
 
 export interface Commands {
@@ -126,6 +127,7 @@ export const VALID_CONFIG_KEYS = new Set([
     "compress.protectedTools",
     "compress.protectTags",
     "compress.protectUserMessages",
+    "compress.autonomousPurge",
     "strategies",
     "strategies.deduplication",
     "strategies.deduplication.enabled",
@@ -433,6 +435,17 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
             }
 
             if (
+                compress.autonomousPurge !== undefined &&
+                typeof compress.autonomousPurge !== "boolean"
+            ) {
+                errors.push({
+                    key: "compress.autonomousPurge",
+                    expected: "boolean",
+                    actual: typeof compress.autonomousPurge,
+                })
+            }
+
+            if (
                 compress.protectUserMessages !== undefined &&
                 typeof compress.protectUserMessages !== "boolean"
             ) {
@@ -689,6 +702,7 @@ const defaultConfig: PluginConfig = {
         protectedTools: [...COMPRESS_DEFAULT_PROTECTED_TOOLS],
         protectTags: false,
         protectUserMessages: false,
+        autonomousPurge: false,
     },
     strategies: {
         deduplication: {
