@@ -1,6 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin"
 import { getConfig } from "./lib/config"
 import { createCompressMessageTool, createCompressRangeTool, createPurgeTool } from "./lib/compress"
+import { t } from "./lib/i18n"
 import {
     compressDisabledByOpencode,
     hasExplicitToolPermission,
@@ -98,24 +99,25 @@ const server: Plugin = (async (ctx) => {
             }
 
             if (config.commands.enabled && config.compress.permission !== "deny") {
+                const lang = config.compress.lang
                 opencodeConfig.command ??= {}
                 opencodeConfig.command["dcp-compress"] = {
                     template: "",
-                    description: "Trigger DCP manual compression",
+                    description: t("Trigger DCP manual compression", lang),
                 }
                 const subcommands: [string, string][] = [
                     [
                         "dcp",
-                        "DCP commands: sweep, context, stats, manual, purge, decompress, recompress",
+                        t("DCP commands: sweep, context, stats, manual, purge, decompress, recompress", lang),
                     ],
-                    ["dcp-sweep", "Prune tool outputs since last user message"],
-                    ["dcp-context", "Show token usage breakdown for current session"],
-                    ["dcp-stats", "Show DCP pruning statistics"],
-                    ["dcp-manual", "Toggle manual mode on/off"],
-                    ["dcp-purge", "Aggressive cleanup: delete or compress any content"],
-                    ["dcp-decompress", "Restore selected compression"],
-                    ["dcp-recompress", "Re-apply a user-decompressed compression"],
-                    ["dcp-help", "Show DCP command help"],
+                    ["dcp-sweep", t("Prune tool outputs since last user message", lang)],
+                    ["dcp-context", t("Show token usage breakdown for current session", lang)],
+                    ["dcp-stats", t("Show DCP pruning statistics", lang)],
+                    ["dcp-manual", t("Toggle manual mode on/off", lang)],
+                    ["dcp-purge", t("Aggressive cleanup: delete or compress any content", lang)],
+                    ["dcp-decompress", t("Restore selected compression", lang)],
+                    ["dcp-recompress", t("Re-apply a user-decompressed compression", lang)],
+                    ["dcp-help", t("Show DCP command help", lang)],
                 ]
                 for (const [name, desc] of subcommands) {
                     opencodeConfig.command[name] = { template: "", description: desc }

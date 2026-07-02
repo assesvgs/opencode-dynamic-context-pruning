@@ -4,6 +4,8 @@ import { TextAttributes } from "@opentui/core"
 import type { JSX } from "solid-js"
 import { pct } from "./format"
 import type { Theme, ThemeColor, TuiApi } from "./types"
+import type { Lang } from "../i18n"
+import { t } from "../i18n"
 
 export function DcpFrame(props: {
     api: TuiApi
@@ -11,6 +13,7 @@ export function DcpFrame(props: {
     eyebrow: string
     children: JSX.Element
     onBack?: () => void
+    lang?: Lang
 }) {
     const theme = props.api.theme.current
     return (
@@ -36,7 +39,7 @@ export function DcpFrame(props: {
                 {props.onBack ? (
                     <FooterButton
                         theme={theme}
-                        label="back"
+                        label={t("back", props.lang ?? "en")}
                         variant="muted"
                         onClick={props.onBack}
                     />
@@ -45,7 +48,7 @@ export function DcpFrame(props: {
                 )}
                 <FooterButton
                     theme={theme}
-                    label="close"
+                    label={t("close", props.lang ?? "en")}
                     variant="primary"
                     onClick={() => props.api.ui.dialog.clear()}
                 />
@@ -193,6 +196,7 @@ export function ActionRow(props: {
     title: string
     detail: string
     onClick: () => void
+    lang?: Lang
 }) {
     const accent = props.theme.primary
     return (
@@ -212,7 +216,7 @@ export function ActionRow(props: {
                 <text fg={props.theme.text}>{props.detail}</text>
             </box>
             <box paddingLeft={2} paddingRight={2} backgroundColor={accent}>
-                <text fg={props.theme.selectedListItemText}>open</text>
+                <text fg={props.theme.selectedListItemText}>{t("open", props.lang ?? "en")}</text>
             </box>
         </box>
     )

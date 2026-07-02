@@ -6,6 +6,8 @@ import { saveManualModeSetting } from "../state/persistence"
 import { loadSessionData, logger } from "./data"
 import { ContextDialog, PanelDialog, StatsDialog, StatusDialog } from "./dialogs"
 import type { TuiApi } from "./types"
+import type { Lang } from "../i18n"
+import { t } from "../i18n"
 
 export function showDialog(api: TuiApi, render: () => any) {
     api.ui.dialog.setSize("xlarge")
@@ -36,6 +38,7 @@ export function openContextModal(api: TuiApi, config: PluginConfig) {
                 state={data.state}
                 messages={data.messages}
                 onBack={() => openPanelModal(api, config)}
+                lang={config.compress.lang}
             />
         ))
     })
@@ -70,13 +73,14 @@ export function openPanelModal(api: TuiApi, config: PluginConfig) {
                 onContext={() => openContextModal(api, config)}
                 onStats={() => openStatsModal(api, config)}
                 onManual={(enabled) => setManualMode(api, config, data.state.sessionId, enabled)}
+                lang={config.compress.lang}
             />
         ))
     })
 }
 
-function runModal(api: TuiApi, title: string, task: () => Promise<void>) {
-    showStatusDialog(api, title, "DCP", "Loading...")
+function runModal(api: TuiApi, title: string, task: () => Promise<void>, lang?: Lang) {
+    showStatusDialog(api, title, "DCP", t("Loading...", lang ?? "en"))
     void task().catch((error) => showError(api, title, error))
 }
 

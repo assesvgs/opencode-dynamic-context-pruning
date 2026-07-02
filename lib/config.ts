@@ -28,6 +28,7 @@ export interface CompressConfig {
     protectTags: boolean
     protectUserMessages: boolean
     autonomousPurge: boolean
+    lang: "en" | "zh"
 }
 
 export interface Commands {
@@ -128,6 +129,7 @@ export const VALID_CONFIG_KEYS = new Set([
     "compress.protectTags",
     "compress.protectUserMessages",
     "compress.autonomousPurge",
+    "compress.lang",
     "strategies",
     "strategies.deduplication",
     "strategies.deduplication.enabled",
@@ -446,6 +448,18 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
             }
 
             if (
+                compress.lang !== undefined &&
+                compress.lang !== "en" &&
+                compress.lang !== "zh"
+            ) {
+                errors.push({
+                    key: "compress.lang",
+                    expected: '"en" | "zh"',
+                    actual: JSON.stringify(compress.lang),
+                })
+            }
+
+            if (
                 compress.protectUserMessages !== undefined &&
                 typeof compress.protectUserMessages !== "boolean"
             ) {
@@ -703,6 +717,7 @@ const defaultConfig: PluginConfig = {
         protectTags: false,
         protectUserMessages: false,
         autonomousPurge: false,
+        lang: "en",
     },
     strategies: {
         deduplication: {
@@ -870,6 +885,7 @@ function mergeCompress(
         nudgeForce: override.nudgeForce ?? base.nudgeForce,
         protectedTools: [...new Set([...base.protectedTools, ...(override.protectedTools ?? [])])],
         autonomousPurge: override.autonomousPurge ?? base.autonomousPurge,
+        lang: override.lang ?? base.lang,
         protectTags: override.protectTags ?? base.protectTags,
         protectUserMessages: override.protectUserMessages ?? base.protectUserMessages,
     }

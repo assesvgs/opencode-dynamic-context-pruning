@@ -9,6 +9,8 @@ import { TextAttributes } from "@opentui/core"
 import { formatDuration, formatRatio } from "./format"
 import { ActionRow, Card, DcpFrame, Metric, Progress, PromptRow, StatusPill } from "./ui"
 import type { StatsReport, TuiApi } from "./types"
+import type { Lang } from "../i18n"
+import { t } from "../i18n"
 
 export function StatusDialog(props: {
     api: TuiApi
@@ -30,38 +32,39 @@ export function ContextDialog(props: {
     state: SessionState
     messages: WithParts[]
     onBack: () => void
+    lang?: Lang
 }) {
     const theme = props.api.theme.current
     const breakdown = analyzeContextTokens(props.state, props.messages)
     const total = Math.max(0, breakdown.total)
     const activePruned = breakdown.prunedToolCount + breakdown.prunedMessageCount
-
+    const L = (s: string) => t(s, props.lang ?? "en")
     return (
         <DcpFrame api={props.api} title="Context" eyebrow="DCP" onBack={props.onBack}>
-            <Card theme={theme} title="Current">
+            <Card theme={theme} title={L("Current")}>
                 <Metric
                     theme={theme}
-                    label="Total in context"
+                    label={L("Total in context")}
                     value={`~${formatTokenCount(total)}`}
                     hint="tokens"
                 />
                 <Metric
                     theme={theme}
-                    label="Tools in context"
+                    label={L("Tools in context")}
                     value={`${breakdown.toolsInContextCount}`}
                 />
-                <Metric theme={theme} label="Active pruned targets" value={`${activePruned}`} />
+                <Metric theme={theme} label={L("Active pruned targets")} value={`${activePruned}`} />
                 <Metric
                     theme={theme}
-                    label="Tokens pruned"
+                    label={L("Tokens pruned")}
                     value={`~${formatTokenCount(breakdown.prunedTokens)}`}
                     hint="tokens"
                 />
             </Card>
-            <Card theme={theme} title="Breakdown">
+            <Card theme={theme} title={L("Breakdown")}>
                 <Progress
                     theme={theme}
-                    label="System"
+                    label={L("System")}
                     value={breakdown.system}
                     total={total}
                     color="primary"
@@ -69,7 +72,7 @@ export function ContextDialog(props: {
                 />
                 <Progress
                     theme={theme}
-                    label="User"
+                    label={L("User")}
                     value={breakdown.user}
                     total={total}
                     color="primary"
@@ -77,7 +80,7 @@ export function ContextDialog(props: {
                 />
                 <Progress
                     theme={theme}
-                    label="Assistant"
+                    label={L("Assistant")}
                     value={breakdown.assistant}
                     total={total}
                     color="primary"
@@ -161,6 +164,7 @@ export function PanelDialog(props: {
     onContext: () => void
     onStats: () => void
     onManual: (enabled: boolean) => void
+    lang?: Lang
 }) {
     const theme = props.api.theme.current
     const canCompress = compressPermission(props.state, props.config) !== "deny"
@@ -208,6 +212,7 @@ export function PanelDialog(props: {
 }
 
 function ManualModeToggle(props: {
+    lang?: Lang
     api: TuiApi
     state: SessionState
     onToggle: (enabled: boolean) => void
@@ -219,7 +224,7 @@ function ManualModeToggle(props: {
         <box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
             <box width={22}>
                 <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-                    Manual mode
+                    {t("Manual mode", props.lang ?? "en")}
                 </text>
             </box>
             <box
