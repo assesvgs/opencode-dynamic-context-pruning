@@ -8,4 +8,5 @@ export {
 } from "./manual"
 export { handleRecompressCommand } from "./recompress"
 export { handleStatsCommand } from "./stats"
+export { handlePurgeTriggerCommand } from "./purge"
 export { handleSweepCommand } from "./sweep"

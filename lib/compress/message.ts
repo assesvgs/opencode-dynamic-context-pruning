@@ -77,24 +77,31 @@ export function createCompressMessageTool(ctx: ToolContext): ReturnType<typeof t
             }> = []
 
             for (const plan of plans) {
-                const summaryWithPromptInfo = appendProtectedPromptInfo(
-                    plan.entry.summary,
-                    plan.selection,
-                    searchContext,
-                    ctx.state,
-                    ctx.config.compress.protectTags,
-                )
+                // In purge mode, skip protected content handling
+                const isPurge = ctx.state.purgeMode
 
-                const summaryWithTools = await appendProtectedTools(
-                    ctx.client,
-                    ctx.state,
-                    ctx.config.experimental.allowSubAgents,
-                    summaryWithPromptInfo,
-                    plan.selection,
-                    searchContext,
-                    ctx.config.compress.protectedTools,
-                    ctx.config.protectedFilePatterns,
-                )
+                const summaryWithPromptInfo = isPurge
+                    ? plan.entry.summary
+                    : appendProtectedPromptInfo(
+                          plan.entry.summary,
+                          plan.selection,
+                          searchContext,
+                          ctx.state,
+                          ctx.config.compress.protectTags,
+                      )
+
+                const summaryWithTools = isPurge
+                    ? summaryWithPromptInfo
+                    : await appendProtectedTools(
+                          ctx.client,
+                          ctx.state,
+                          ctx.config.experimental.allowSubAgents,
+                          summaryWithPromptInfo,
+                          plan.selection,
+                          searchContext,
+                          ctx.config.compress.protectedTools,
+                          ctx.config.protectedFilePatterns,
+                      )
 
                 preparedPlans.push({
                     plan,

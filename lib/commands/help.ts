@@ -31,6 +31,7 @@ const TOOL_COMMANDS: Record<string, [string, string]> = {
     stats: ["/dcp stats", "Show DCP pruning statistics"],
     sweep: ["/dcp sweep [n]", "Prune tool outputs since last user message"],
     manual: ["/dcp manual [on|off]", "Toggle manual mode on/off"],
+    purge: ["/dcp purge", "Aggressive cleanup: delete or compress any content"],
     decompress: ["/dcp decompress <n>", "Restore selected compression"],
     recompress: ["/dcp recompress <n>", "Re-apply a user-decompressed compression"],
 }
@@ -45,6 +46,7 @@ function getVisibleCommands(state: SessionState, config: PluginConfig): [string,
     commands.push(TOOL_COMMANDS.stats)
     commands.push(TOOL_COMMANDS.sweep)
     commands.push(TOOL_COMMANDS.manual)
+    commands.push(TOOL_COMMANDS.purge)
     commands.push(TOOL_COMMANDS.decompress)
     commands.push(TOOL_COMMANDS.recompress)
 

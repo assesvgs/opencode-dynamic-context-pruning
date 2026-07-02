@@ -189,6 +189,12 @@ const filterCompressedRanges = (
                     anchorMessageId: msgId,
                     blockId: (summary as { blockId?: unknown }).blockId,
                 })
+            } else if (rawSummaryContent.trim() === "[purged]") {
+                // Purge mode: silently drop this content, no summary injected
+                logger.info("Purged content at anchor", {
+                    anchorMessageId: msgId,
+                    blockId: (summary as { blockId?: unknown }).blockId,
+                })
             } else {
                 // Find user message for variant and as base for synthetic message
                 const msgIndex = messages.indexOf(msg)

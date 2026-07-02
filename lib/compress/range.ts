@@ -104,32 +104,41 @@ export function createCompressRangeTool(ctx: ToolContext): ReturnType<typeof too
                     plan.selection.endReference,
                 )
 
-                const summaryWithUsers = appendProtectedUserMessages(
-                    injected.expandedSummary,
-                    plan.selection,
-                    searchContext,
-                    ctx.state,
-                    ctx.config.compress.protectUserMessages,
-                )
+                // In purge mode, skip ALL protected content handling
+                const isPurge = ctx.state.purgeMode
 
-                const summaryWithPromptInfo = appendProtectedPromptInfo(
-                    summaryWithUsers,
-                    plan.selection,
-                    searchContext,
-                    ctx.state,
-                    ctx.config.compress.protectTags,
-                )
+                const summaryWithUsers = isPurge
+                    ? injected.expandedSummary
+                    : appendProtectedUserMessages(
+                          injected.expandedSummary,
+                          plan.selection,
+                          searchContext,
+                          ctx.state,
+                          ctx.config.compress.protectUserMessages,
+                      )
 
-                const summaryWithTools = await appendProtectedTools(
-                    ctx.client,
-                    ctx.state,
-                    ctx.config.experimental.allowSubAgents,
-                    summaryWithPromptInfo,
-                    plan.selection,
-                    searchContext,
-                    ctx.config.compress.protectedTools,
-                    ctx.config.protectedFilePatterns,
-                )
+                const summaryWithPromptInfo = isPurge
+                    ? summaryWithUsers
+                    : appendProtectedPromptInfo(
+                          summaryWithUsers,
+                          plan.selection,
+                          searchContext,
+                          ctx.state,
+                          ctx.config.compress.protectTags,
+                      )
+
+                const summaryWithTools = isPurge
+                    ? summaryWithPromptInfo
+                    : await appendProtectedTools(
+                          ctx.client,
+                          ctx.state,
+                          ctx.config.experimental.allowSubAgents,
+                          summaryWithPromptInfo,
+                          plan.selection,
+                          searchContext,
+                          ctx.config.compress.protectedTools,
+                          ctx.config.protectedFilePatterns,
+                      )
 
                 const completedSummary = appendMissingBlockSummaries(
                     summaryWithTools,

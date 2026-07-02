@@ -68,6 +68,7 @@ export function createSessionState(): SessionState {
         sessionId: null,
         isSubAgent: false,
         manualMode: false,
+        purgeMode: false,
         compressPermission: undefined,
         pendingManualTrigger: null,
         prune: {

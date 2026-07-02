@@ -30,6 +30,7 @@ import {
     handleHelpCommand,
     handleManualToggleCommand,
     handleManualTriggerCommand,
+    handlePurgeTriggerCommand,
     handleRecompressCommand,
     handleStatsCommand,
     handleSweepCommand,
@@ -229,6 +230,23 @@ export function createCommandExecuteHandler(
 
             if (subcommand === "manual") {
                 await handleManualToggleCommand(commandCtx, subArgs[0]?.toLowerCase())
+                return
+            }
+
+            if (subcommand === "purge") {
+                const prompt = await handlePurgeTriggerCommand(commandCtx)
+                state.manualMode = "compress-pending"
+                state.purgeMode = true
+                state.pendingManualTrigger = {
+                    sessionId: input.sessionID,
+                    prompt,
+                }
+                const rawArgs = (input.arguments || "").trim()
+                output.parts.length = 0
+                output.parts.push({
+                    type: "text",
+                    text: rawArgs ? `/dcp purge ${rawArgs}` : "/dcp purge",
+                })
                 return
             }
 

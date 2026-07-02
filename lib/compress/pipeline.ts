@@ -86,6 +86,7 @@ export async function finalizeSession(
     batchTopic: string | undefined,
 ): Promise<void> {
     ctx.state.manualMode = ctx.state.manualMode ? "active" : false
+    ctx.state.purgeMode = false
     applyPendingCompressionDurations(ctx.state)
     await saveSessionState(ctx.state, ctx.logger)
 

@@ -94,6 +94,7 @@ export interface SessionState {
     sessionId: string | null
     isSubAgent: boolean
     manualMode: false | "active" | "compress-pending"
+    purgeMode: boolean
     compressPermission: "ask" | "allow" | "deny" | undefined
     pendingManualTrigger: PendingManualTrigger | null
     prune: Prune
