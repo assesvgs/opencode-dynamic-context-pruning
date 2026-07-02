@@ -84,7 +84,7 @@ export function createSystemPromptHandler(
         prompts.reload()
         const runtimePrompts = prompts.getRuntimePrompts()
         const purgeExtension = config.compress.autonomousPurge
-            ? `<dcp-system-reminder>\nA \`purge\` tool is also available for aggressive context cleanup. Use it when conversation content is bloated and you need to remove or aggressively summarize large sections. It has no content restrictions.\n</dcp-system-reminder>`
+            ? `<dcp-system-reminder>\nIn addition to \`compress\`, a \`purge\` tool is available. \`purge\` has NO content restrictions — use it for aggressive cleanup when you want to delete or aggressively summarize any content including protected tools, user messages, and file contents.\nCompress with care, purge with discretion.\n</dcp-system-reminder>`
             : ""
         const newPrompt = renderSystemPrompt(
             runtimePrompts,

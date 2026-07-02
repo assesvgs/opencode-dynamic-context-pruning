@@ -143,6 +143,7 @@ const server: Plugin = (async (ctx) => {
                 opencodeConfig.permission = {
                     ...permission,
                     compress: config.compress.permission,
+                    ...(config.compress.autonomousPurge && { purge: config.compress.permission }),
                 } as typeof permission
             }
 
