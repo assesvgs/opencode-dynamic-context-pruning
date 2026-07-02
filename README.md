@@ -50,149 +50,149 @@ opencode plugin @tarquinen/opencode-dcp --global
 
 ```jsonc
 {
-  // ============================================================
-  // 基础设置
-  // ============================================================
+    // ============================================================
+    // 基础设置
+    // ============================================================
 
-  // 启用或禁用 DCP 插件
-  "enabled": true,
-
-  // 自动更新 npm 安装的 DCP（版本锁定的不更新）
-  "autoUpdate": true,
-
-  // 调试日志输出到 ~/.config/opencode/logs/dcp/
-  "debug": false,
-
-  // 裁剪通知显示方式："off" 关闭 / "minimal" 简洁 / "detailed" 详细
-  "pruneNotification": "detailed",
-
-  // 通知位置："chat" 对话内 / "toast" 弹窗（依赖 TTY/GUI）
-  "pruneNotificationType": "chat",
-
-  // ============================================================
-  // 斜杠命令配置
-  // ============================================================
-  "commands": {
-    // 启用 DCP 斜杠命令（/dcp-sweep、/dcp-purge 等）
+    // 启用或禁用 DCP 插件
     "enabled": true,
-    // 额外保护的工具名（内置保护：task/skill/todowrite/todoread/compress/batch/plan_enter/plan_exit/write/edit）
-    "protectedTools": [],
-  },
 
-  // ============================================================
-  // 手动模式
-  // ============================================================
-  "manualMode": {
-    // 启用后 DCP 不自动注入压缩提醒，但 compress 工具仍可用
-    "enabled": false,
-    // 手动模式下是否继续运行自动策略（去重、错误清理）
-    "automaticStrategies": true,
-  },
+    // 自动更新 npm 安装的 DCP（版本锁定的不更新）
+    "autoUpdate": true,
 
-  // ============================================================
-  // 轮次保护
-  // ============================================================
-  "turnProtection": {
-    // 保护最近 N 轮的工具缓存不被回收
-    "enabled": false,
-    // 保护轮数
-    "turns": 4,
-  },
+    // 调试日志输出到 ~/.config/opencode/logs/dcp/
+    "debug": false,
 
-  // ============================================================
-  // 实验性功能
-  // ============================================================
-  "experimental": {
-    // 允许在子代理会话中裁剪上下文
-    "allowSubAgents": false,
-    // 允许用户自定义 DCP 提示词（开启后可覆盖 prompt 文件）
-    "customPrompts": false,
-  },
+    // 裁剪通知显示方式："off" 关闭 / "minimal" 简洁 / "detailed" 详细
+    "pruneNotification": "detailed",
 
-  // 保护文件操作不被裁剪（glob 模式匹配 filePath）
-  "protectedFilePatterns": [],
+    // 通知位置："chat" 对话内 / "toast" 弹窗（依赖 TTY/GUI）
+    "pruneNotificationType": "chat",
 
-  // ============================================================
-  // 上下文压缩工具配置（核心）
-  // ============================================================
-  "compress": {
-    // 语言：命令描述和 TUI 面板的显示语言
-    // "en" = 英文 / "zh" = 中文
-    "lang": "en",
-
-    // 压缩模式：
-    // "range"   — 将连续多轮对话压缩为摘要（稳定，推荐）
-    // "message" — 实验性，单独压缩每条原始消息，更精细
-    "mode": "range",
-
-    // 压缩工具权限：
-    // "allow" — 模型可自由调用，不询问
-    // "ask"   — 调用时询问用户
-    // "deny"  — 不注册压缩工具给模型
-    "permission": "allow",
-
-    // 在聊天中显示压缩内容的详细摘要
-    "showCompression": false,
-
-    // 摘要 token 是否计入 maxContextLimit：
-    // true  = 摘要 token 不计入限制，等效扩展上下文窗口
-    // false = 摘要 token 计入限制
-    "summaryBuffer": true,
-
-    // 上下文软上限（token 数或百分比如 "50%"）
-    // 超过此值持续注入强压缩提醒
-    "maxContextLimit": 100000,
-
-    // 上下文软下限（token 数或百分比如 "30%"）
-    // 低于此值关闭提醒，高于此值开启提醒
-    "minContextLimit": 50000,
-
-    // 按模型覆盖 maxContextLimit，键名格式 "provider/model"
-    "modelMaxLimits": {},
-
-    // 按模型覆盖 minContextLimit
-    "modelMinLimits": {},
-
-    // 压缩提醒频率：1=每次请求都提醒，5=每5次提醒一次
-    "nudgeFrequency": 5,
-
-    // 距上次用户消息后多少条消息才开始提醒压缩
-    "iterationNudgeThreshold": 15,
-
-    // 提醒强度："soft" 温和 / "strong" 积极
-    "nudgeForce": "soft",
-
-    // 额外保护的工具输出会追加到压缩摘要中
-    // 内置保护：task/skill/todowrite/todoread
-    "protectedTools": [],
-
-    // 保留 <protect>...</protect> 标签内容不被压缩
-    "protectTags": false,
-
-    // 保留用户原始消息不被压缩（大段粘贴的提示词将永远保留）
-    "protectUserMessages": false,
-
-    // 允许 AI 自主调用 purge 工具进行极限清理
-    // 启用后 AI 可在认为上下文需要激进清理时自行调用 purge
-    "autonomousPurge": false,
-  },
-
-  // ============================================================
-  // 自动裁剪策略
-  // ============================================================
-  "strategies": {
-    // 去重：相同工具名+参数的多次调用只保留最新结果
-    "deduplication": {
-      "enabled": true,
-      "protectedTools": [],
+    // ============================================================
+    // 斜杠命令配置
+    // ============================================================
+    "commands": {
+        // 启用 DCP 斜杠命令（/dcp-sweep、/dcp-purge 等）
+        "enabled": true,
+        // 额外保护的工具名（内置保护：task/skill/todowrite/todoread/compress/batch/plan_enter/plan_exit/write/edit）
+        "protectedTools": [],
     },
-    // 错误清理：报错工具超过 turns 轮后清除其输入（保留错误信息）
-    "purgeErrors": {
-      "enabled": true,
-      "turns": 4,
-      "protectedTools": [],
+
+    // ============================================================
+    // 手动模式
+    // ============================================================
+    "manualMode": {
+        // 启用后 DCP 不自动注入压缩提醒，但 compress 工具仍可用
+        "enabled": false,
+        // 手动模式下是否继续运行自动策略（去重、错误清理）
+        "automaticStrategies": true,
     },
-  },
+
+    // ============================================================
+    // 轮次保护
+    // ============================================================
+    "turnProtection": {
+        // 保护最近 N 轮的工具缓存不被回收
+        "enabled": false,
+        // 保护轮数
+        "turns": 4,
+    },
+
+    // ============================================================
+    // 实验性功能
+    // ============================================================
+    "experimental": {
+        // 允许在子代理会话中裁剪上下文
+        "allowSubAgents": false,
+        // 允许用户自定义 DCP 提示词（开启后可覆盖 prompt 文件）
+        "customPrompts": false,
+    },
+
+    // 保护文件操作不被裁剪（glob 模式匹配 filePath）
+    "protectedFilePatterns": [],
+
+    // ============================================================
+    // 上下文压缩工具配置（核心）
+    // ============================================================
+    "compress": {
+        // 语言：命令描述和 TUI 面板的显示语言
+        // "en" = 英文 / "zh" = 中文
+        "lang": "en",
+
+        // 压缩模式：
+        // "range"   — 将连续多轮对话压缩为摘要（稳定，推荐）
+        // "message" — 实验性，单独压缩每条原始消息，更精细
+        "mode": "range",
+
+        // 压缩工具权限：
+        // "allow" — 模型可自由调用，不询问
+        // "ask"   — 调用时询问用户
+        // "deny"  — 不注册压缩工具给模型
+        "permission": "allow",
+
+        // 在聊天中显示压缩内容的详细摘要
+        "showCompression": false,
+
+        // 摘要 token 是否计入 maxContextLimit：
+        // true  = 摘要 token 不计入限制，等效扩展上下文窗口
+        // false = 摘要 token 计入限制
+        "summaryBuffer": true,
+
+        // 上下文软上限（token 数或百分比如 "50%"）
+        // 超过此值持续注入强压缩提醒
+        "maxContextLimit": 100000,
+
+        // 上下文软下限（token 数或百分比如 "30%"）
+        // 低于此值关闭提醒，高于此值开启提醒
+        "minContextLimit": 50000,
+
+        // 按模型覆盖 maxContextLimit，键名格式 "provider/model"
+        "modelMaxLimits": {},
+
+        // 按模型覆盖 minContextLimit
+        "modelMinLimits": {},
+
+        // 压缩提醒频率：1=每次请求都提醒，5=每5次提醒一次
+        "nudgeFrequency": 5,
+
+        // 距上次用户消息后多少条消息才开始提醒压缩
+        "iterationNudgeThreshold": 15,
+
+        // 提醒强度："soft" 温和 / "strong" 积极
+        "nudgeForce": "soft",
+
+        // 额外保护的工具输出会追加到压缩摘要中
+        // 内置保护：task/skill/todowrite/todoread
+        "protectedTools": [],
+
+        // 保留 <protect>...</protect> 标签内容不被压缩
+        "protectTags": false,
+
+        // 保留用户原始消息不被压缩（大段粘贴的提示词将永远保留）
+        "protectUserMessages": false,
+
+        // 允许 AI 自主调用 purge 工具进行极限清理
+        // 启用后 AI 可在认为上下文需要激进清理时自行调用 purge
+        "autonomousPurge": false,
+    },
+
+    // ============================================================
+    // 自动裁剪策略
+    // ============================================================
+    "strategies": {
+        // 去重：相同工具名+参数的多次调用只保留最新结果
+        "deduplication": {
+            "enabled": true,
+            "protectedTools": [],
+        },
+        // 错误清理：报错工具超过 turns 轮后清除其输入（保留错误信息）
+        "purgeErrors": {
+            "enabled": true,
+            "turns": 4,
+            "protectedTools": [],
+        },
+    },
 }
 ```
 
@@ -205,8 +205,8 @@ opencode plugin @tarquinen/opencode-dcp --global
 - 压缩的内容类型：模型选定的对话范围（用户消息、助手回复、工具调用结果）
 - 受保护的内容：`protectedTools` 列表中的工具输出会追加到摘要中保留
 - 两种模式：
-  - `range` 模式：压缩连续对话范围，输出一个或多个摘要块
-  - `message` 模式：逐条压缩独立消息，更精细
+    - `range` 模式：压缩连续对话范围，输出一个或多个摘要块
+    - `message` 模式：逐条压缩独立消息，更精细
 - 可选 `[焦点]` 参数指引模型压缩的重点方向
 
 ### `/dcp-purge` — 极限清理
