@@ -1,4 +1,4 @@
-name: Publish
+name: Build
 
 on:
     workflow_dispatch:
@@ -8,15 +8,14 @@ on:
 
 permissions:
     contents: read
-    id-token: write
 
 concurrency:
-    group: publish-${{ github.ref }}
+    group: build-${{ github.ref }}
     cancel-in-progress: false
 
 jobs:
-    npm:
-        name: Publish to npm
+    build:
+        name: Build & Upload Artifact
         runs-on: ubuntu-latest
 
         steps:
@@ -28,40 +27,25 @@ jobs:
               with:
                   node-version: "22.x"
                   cache: npm
-                  registry-url: https://registry.npmjs.org
-
-            - name: Check npm version
-              id: package
-              run: |
-                  NAME=$(node -p "require('./package.json').name")
-                  VERSION=$(node -p "require('./package.json').version")
-                  echo "name=${NAME}" >> "$GITHUB_OUTPUT"
-                  echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-                  if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
-                      echo "published=true" >> "$GITHUB_OUTPUT"
-                      echo "${NAME}@${VERSION} is already published."
-                  else
-                      echo "published=false" >> "$GITHUB_OUTPUT"
-                      echo "${NAME}@${VERSION} is not published yet."
-                  fi
 
             - name: Install dependencies
-              if: steps.package.outputs.published == 'false'
               run: npm ci
 
             - name: Format check
-              if: steps.package.outputs.published == 'false'
               run: npm run format:check
 
             - name: Type check
-              if: steps.package.outputs.published == 'false'
               run: npm run typecheck
 
             - name: Test
-              if: steps.package.outputs.published == 'false'
               run: npm test
 
-            - name: Publish
-              if: steps.package.outputs.published == 'false'
-              run: npx --yes --package npm@11 npm publish --access public --provenance
+            - name: Build
+              run: npm run build
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+                  if-no-files-found: error
