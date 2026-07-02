@@ -43,6 +43,19 @@ jobs:
             - name: Build
               run: npm run build
 
+            - name: Prepare plugin package
+              run: |
+                  mkdir -p dist
+                  cp package.json dist/
+                  node -e "
+                    const pkg = require('./package.json');
+                    pkg.main = './index.js';
+                    delete pkg.scripts;
+                    delete pkg.devDependencies;
+                    delete pkg.overrides;
+                    require('fs').writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2) + '\n');
+                  "
+
             - name: Set short SHA
               id: vars
               run: echo "short_sha=${GITHUB_SHA:0:8}" >> "$GITHUB_OUTPUT"
