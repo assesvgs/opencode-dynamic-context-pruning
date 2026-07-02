@@ -30,7 +30,7 @@ export function DcpFrame(props: {
                     ) : null}
                 </box>
                 <text fg={theme.textMuted} onMouseUp={() => props.api.ui.dialog.clear()}>
-                    esc
+                    {t("esc", props.lang ?? "en")}
                 </text>
             </box>
             <box height={1} border={["bottom"]} borderColor={theme.borderSubtle} />

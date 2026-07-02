@@ -119,7 +119,7 @@ export function applyPendingManualTrigger(
 
             part.text = pending.prompt
             state.pendingManualTrigger = null
-            state.purgeMode = false
+            // NOTE: purgeMode 保持 true，等待 AI 调用 compress 后由 finalizeSession 复位
             logger.debug("Applied manual prompt", { sessionId: pending.sessionId })
             return
         }
