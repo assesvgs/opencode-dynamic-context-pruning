@@ -784,8 +784,57 @@ function createDefaultConfig(): void {
         mkdirSync(GLOBAL_CONFIG_DIR, { recursive: true })
     }
 
+    const cfg = defaultConfig
     const configContent = `{
-  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json"
+  "\\$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+  "enabled": ${cfg.enabled},
+  "autoUpdate": ${cfg.autoUpdate},
+  "debug": ${cfg.debug},
+  "pruneNotification": "${cfg.pruneNotification}",
+  "pruneNotificationType": "${cfg.pruneNotificationType}",
+  "commands": {
+    "enabled": ${cfg.commands.enabled},
+    "protectedTools": ${JSON.stringify(cfg.commands.protectedTools)}
+  },
+  "manualMode": {
+    "enabled": ${cfg.manualMode.enabled},
+    "automaticStrategies": ${cfg.manualMode.automaticStrategies}
+  },
+  "turnProtection": {
+    "enabled": ${cfg.turnProtection.enabled},
+    "turns": ${cfg.turnProtection.turns}
+  },
+  "experimental": {
+    "allowSubAgents": ${cfg.experimental.allowSubAgents},
+    "customPrompts": ${cfg.experimental.customPrompts}
+  },
+  "protectedFilePatterns": ${JSON.stringify(cfg.protectedFilePatterns)},
+  "compress": {
+    "mode": "${cfg.compress.mode}",
+    "permission": "${cfg.compress.permission}",
+    "showCompression": ${cfg.compress.showCompression},
+    "summaryBuffer": ${cfg.compress.summaryBuffer},
+    "maxContextLimit": ${cfg.compress.maxContextLimit},
+    "minContextLimit": ${cfg.compress.minContextLimit},
+    "nudgeFrequency": ${cfg.compress.nudgeFrequency},
+    "iterationNudgeThreshold": ${cfg.compress.iterationNudgeThreshold},
+    "nudgeForce": "${cfg.compress.nudgeForce}",
+    "protectedTools": ${JSON.stringify(cfg.compress.protectedTools)},
+    "protectTags": ${cfg.compress.protectTags},
+    "protectUserMessages": ${cfg.compress.protectUserMessages},
+    "autonomousPurge": ${cfg.compress.autonomousPurge}
+  },
+  "strategies": {
+    "deduplication": {
+      "enabled": ${cfg.strategies.deduplication.enabled},
+      "protectedTools": ${JSON.stringify(cfg.strategies.deduplication.protectedTools)}
+    },
+    "purgeErrors": {
+      "enabled": ${cfg.strategies.purgeErrors.enabled},
+      "turns": ${cfg.strategies.purgeErrors.turns},
+      "protectedTools": ${JSON.stringify(cfg.strategies.purgeErrors.protectedTools)}
+    }
+  }
 }
 `
     writeFileSync(GLOBAL_CONFIG_PATH_JSONC, configContent, "utf-8")
