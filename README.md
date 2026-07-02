@@ -9,13 +9,21 @@
 1. 进入仓库 Actions 页面，选择最新成功的 **Build** workflow
 2. 下载 Artifact（文件名格式 `dcp-{提交哈希前8位}`）
 3. 解压到任意目录
-4. 安装到 OpenCode：
+4. 安装到 OpenCode（**项目级**，保存在当前项目的 `.opencode/opencode.json`）：
 
 ```bash
+cd /path/to/your/project
 opencode plugin /path/to/dcp-xxxxxx --force
 ```
 
-### 从本地项目目录安装
+> 如需全局安装（用于所有项目），添加 `--global` 参数：
+> ```bash
+> opencode plugin /path/to/dcp-xxxxxx --global
+> ```
+
+### 从本地项目目录安装（Termux / ARM64 环境）
+
+> `tsup` 在 Termux (Android ARM64) 上无法运行，需要使用 `build-local.mjs` 替代。
 
 ```bash
 git clone https://github.com/assesvgs/opencode-dynamic-context-pruning
@@ -24,12 +32,14 @@ cd opencode-dynamic-context-pruning
 # 安装依赖
 npm install
 
-# 构建
+# 构建（Termux 专用，使用 esbuild Node.js API 而非 tsup）
 node build-local.mjs
 
-# 安装插件
+# 安装插件（项目级，保存在 .opencode/opencode.json 中）
 opencode plugin . --force
 ```
+
+在标准 Linux/macOS 环境上可直接使用 `npm run build`。
 
 ### 从 npm 安装（原版）
 
