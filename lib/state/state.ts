@@ -107,6 +107,7 @@ export function resetSessionState(state: SessionState): void {
     state.sessionId = null
     state.isSubAgent = false
     state.manualMode = false
+    state.purgeMode = false
     state.compressPermission = undefined
     state.pendingManualTrigger = null
     state.prune = {

@@ -105,7 +105,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
     const L = (s: string) => t(s, props.lang ?? "en")
     return (
         <DcpFrame api={props.api} title={t("Stats", props.lang ?? "en")} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang} onBack={props.onBack}>
-            <Card theme={theme} title="Session">
+            <Card theme={theme} title={L("Session")}>
                 <Metric
                     theme={theme}
                     label={L("Tokens saved")}
@@ -131,7 +131,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
                     value={`${props.report.sessionMessages}`}
                 />
             </Card>
-            <Card theme={theme} title="All time">
+            <Card theme={theme} title={L("All time")}>
                 <Metric
                     theme={theme}
                     label={L("Tokens saved")}
@@ -171,7 +171,7 @@ export function PanelDialog(props: {
     const canCompress = compressPermission(props.state, props.config) !== "deny"
     return (
         <DcpFrame api={props.api} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang}>
-            <Card theme={theme} title="Views">
+            <Card theme={theme} title={t("Views", props.lang ?? "en")}>
                 <box flexDirection="column" gap={1}>
                     <ActionRow
                         theme={theme}
@@ -182,7 +182,7 @@ export function PanelDialog(props: {
                     <ActionRow
                         theme={theme}
                         title={t("Stats", props.lang ?? "en")}
-                        detail="Savings"
+                        detail={t("Savings", props.lang ?? "en")}
                         onClick={props.onStats}
                     />
                 </box>
@@ -196,7 +196,7 @@ export function PanelDialog(props: {
                         accent="primary"
                     />
                 ) : (
-                    <text fg={theme.textMuted}>Compression is denied by permissions.</text>
+                    <text fg={theme.textMuted}>{t("Compression is denied by permissions.", props.lang ?? "en")}</text>
                 )}
             </Card>
             <Card theme={theme} title={t("Session State", props.lang ?? "en")}>

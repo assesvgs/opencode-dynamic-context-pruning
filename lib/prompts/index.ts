@@ -6,7 +6,6 @@ export function renderSystemPrompt(
     protectedToolsExtension?: string,
     manual?: boolean,
     subagent?: boolean,
-    purgeExtension?: string,
 ): string {
     const extensions: string[] = []
 
@@ -20,10 +19,6 @@ export function renderSystemPrompt(
 
     if (subagent) {
         extensions.push(prompts.subagentExtension.trim())
-    }
-
-    if (purgeExtension) {
-        extensions.push(purgeExtension.trim())
     }
 
     return [prompts.system.trim(), ...extensions]

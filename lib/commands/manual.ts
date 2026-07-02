@@ -102,6 +102,7 @@ export function applyPendingManualTrigger(
 
     if (!state.sessionId || pending.sessionId !== state.sessionId) {
         state.pendingManualTrigger = null
+        state.purgeMode = false
         return
     }
 
@@ -118,10 +119,12 @@ export function applyPendingManualTrigger(
 
             part.text = pending.prompt
             state.pendingManualTrigger = null
+            state.purgeMode = false
             logger.debug("Applied manual prompt", { sessionId: pending.sessionId })
             return
         }
     }
 
     state.pendingManualTrigger = null
+    state.purgeMode = false
 }

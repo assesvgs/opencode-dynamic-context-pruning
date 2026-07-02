@@ -251,6 +251,12 @@
                     "type": "boolean",
                     "default": false,
                     "description": "When enabled, AI can autonomously decide to use the purge tool for aggressive cleanup"
+                },
+                "lang": {
+                    "type": "string",
+                    "enum": ["en", "zh"],
+                    "default": "en",
+                    "description": "Language for command descriptions and TUI display"
                 }
             },
             "default": {
@@ -266,7 +272,8 @@
                 "protectedTools": [],
                 "protectTags": false,
                 "protectUserMessages": false,
-                "autonomousPurge": false
+                "autonomousPurge": false,
+                "lang": "en"
             }
         },
         "strategies": {

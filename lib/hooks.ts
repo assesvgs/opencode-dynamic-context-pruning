@@ -83,15 +83,11 @@ export function createSystemPromptHandler(
 
         prompts.reload()
         const runtimePrompts = prompts.getRuntimePrompts()
-        const purgeExtension = config.compress.autonomousPurge
-            ? `<dcp-system-reminder>\nIn addition to \`compress\`, a \`purge\` tool is available. \`purge\` has NO content restrictions — use it for aggressive cleanup when you want to delete or aggressively summarize any content including protected tools, user messages, and file contents.\nCompress with care, purge with discretion.\n</dcp-system-reminder>`
-            : ""
         const newPrompt = renderSystemPrompt(
             runtimePrompts,
             buildProtectedToolsExtension(config.compress.protectedTools),
             !!state.manualMode,
             state.isSubAgent && config.experimental.allowSubAgents,
-            purgeExtension || undefined,
         )
         if (output.system.length > 0) {
             output.system[output.system.length - 1] += "\n\n" + newPrompt
@@ -340,7 +336,7 @@ export function createEventHandler(state: SessionState, logger: Logger) {
         }
 
         const part = input.event.properties?.part
-        if (part?.type !== "tool" || part.tool !== "compress") {
+        if (part?.type !== "tool" || (part.tool !== "compress" && part.tool !== "purge")) {
             return
         }
 
