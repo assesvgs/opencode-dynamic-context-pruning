@@ -102,7 +102,8 @@ const server: Plugin = (async (ctx) => {
                 }
                 opencodeConfig.command["dcp"] = {
                     template: "",
-                    description: "DCP commands: sweep, context, stats, manual, decompress, recompress, help",
+                    description:
+                        "DCP commands: sweep, context, stats, manual, decompress, recompress, help",
                 }
             }
 
