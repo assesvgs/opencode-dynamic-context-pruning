@@ -100,6 +100,10 @@ const server: Plugin = (async (ctx) => {
                     template: "",
                     description: "Trigger DCP manual compression with: /dcp-compress [focus]",
                 }
+                opencodeConfig.command["dcp"] = {
+                    template: "",
+                    description: "DCP commands: sweep, context, stats, manual, decompress, recompress, help",
+                }
             }
 
             const toolsToAdd: string[] = []
