@@ -14,7 +14,7 @@ const tui: TuiPluginModule["tui"] = async (api) => {
             title: "DCP",
             name: "dcp.panel",
             description: "Open DCP panel",
-            slashName: "dcp",
+            slashName: "dcp-panel",
             run: () => openPanelModal(api, config),
         },
     ])
