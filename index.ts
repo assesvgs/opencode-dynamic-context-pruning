@@ -106,10 +106,6 @@ const server: Plugin = (async (ctx) => {
                     description: t("Trigger DCP manual compression", lang),
                 }
                 const subcommands: [string, string][] = [
-                    [
-                        "dcp",
-                        t("DCP commands: sweep, context, stats, manual, purge, decompress, recompress", lang),
-                    ],
                     ["dcp-sweep", t("Prune tool outputs since last user message", lang)],
                     ["dcp-context", t("Show token usage breakdown for current session", lang)],
                     ["dcp-stats", t("Show DCP pruning statistics", lang)],
