@@ -4,6 +4,7 @@ import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { registerCommands } from "./lib/tui/commands"
 import { loadConfig } from "./lib/tui/data"
 import { openPanelModal } from "./lib/tui/modals"
+import { t } from "./lib/i18n"
 
 const tui: TuiPluginModule["tui"] = async (api) => {
     const config = loadConfig(api)
@@ -11,9 +12,9 @@ const tui: TuiPluginModule["tui"] = async (api) => {
 
     registerCommands(api, [
         {
-            title: "DCP",
+            title: t("DCP", config.compress.lang),
             name: "dcp.panel",
-            description: "Open DCP panel",
+            description: t("Open DCP panel", config.compress.lang),
             slashName: "dcp-panel",
             run: () => openPanelModal(api, config),
         },

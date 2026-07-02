@@ -35,6 +35,7 @@ const zh: Record<string, string> = {
     "Compression time": "压缩耗时",
     "Tools pruned": "已裁剪工具数",
     "Sessions with DCP history": "有 DCP 历史的会话",
+    "Open DCP panel": "打开 DCP 面板",
     "DCP": "DCP",
     "DCP Error": "DCP 错误",
     "DCP Commands": "DCP 命令",
