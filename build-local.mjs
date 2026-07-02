@@ -1,5 +1,5 @@
 import esbuild from "esbuild"
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs"
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync } from "fs"
 
 const pkg = JSON.parse(readFileSync("package.json", "utf-8"))
 
@@ -25,5 +25,6 @@ const distPkg = {
     peerDependencies: pkg.peerDependencies,
 }
 writeFileSync("dist/package.json", JSON.stringify(distPkg, null, 2) + "\n")
+copyFileSync("tui.tsx", "dist/tui.tsx")
 
-console.log("✅ Built to dist/ (index.js + package.json)")
+console.log("✅ Built to dist/ (index.js + package.json + tui.tsx)")

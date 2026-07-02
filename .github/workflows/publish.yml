@@ -46,7 +46,7 @@ jobs:
             - name: Prepare plugin package
               run: |
                   mkdir -p dist
-                  cp package.json dist/
+                  cp package.json tui.tsx README.md dist/
                   node -e "
                     const pkg = require('./package.json');
                     pkg.main = './index.js';
@@ -55,6 +55,9 @@ jobs:
                     delete pkg.scripts;
                     delete pkg.devDependencies;
                     delete pkg.overrides;
+                    // Remove npm-specific fields not needed for local install
+                    delete pkg.files;
+                    delete pkg.keywords;
                     require('fs').writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2) + '\n');
                   "
 

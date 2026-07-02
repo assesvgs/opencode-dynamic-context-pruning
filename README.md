@@ -1,238 +1,141 @@
-# Dynamic Context Pruning Plugin
+# DCP — OpenCode 上下文裁剪插件
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/dansmolsky)
-[![npm version](https://img.shields.io/npm/v/@tarquinen/opencode-dcp.svg)](https://www.npmjs.com/package/@tarquinen/opencode-dcp)
+自动管理 OpenCode 对话上下文，通过压缩、去重、错误清理来降低 token 消耗。
 
-Automatically reduces token usage in OpenCode by managing conversation context.
+## 安装
 
-![DCP in action](assets/images/dcp-demo9.png)
+### 从 GitHub Actions 构建产物安装（推荐）
 
-## Installation
-
-Install from the CLI:
-
-```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
-```
-
-This installs the package and adds it to your global OpenCode config.
-
-## Project Status
-
-Development on DCP has slowed because most new context-management work has moved to [Sleev](https://sleev.ai) and the `sleev` CLI. Sleev is a local proxy for Claude Code, Codex, and OpenCode that builds on DCP's core ideas with newer context-management features and will work with any harness/client.
-
-DCP remains available for OpenCode plugin users, but new features are landing in Sleev first. If you are starting fresh, we recommend trying Sleev:
+1. 进入仓库 Actions 页面，选择最新成功的 **Build** workflow
+2. 下载 Artifact（文件名格式 `dcp-{提交哈希前8位}`）
+3. 解压到任意目录
+4. 安装到 OpenCode：
 
 ```bash
-npm i -g sleev
-sleev
+opencode plugin /path/to/dcp-xxxxxx --force
 ```
 
-## How It Works
+### 从本地项目目录安装
 
-DCP reduces context size through a compress tool and automatic cleanup. Your session history is never modified — DCP replaces pruned content with placeholders before sending requests to your LLM.
+```bash
+git clone https://github.com/assesvgs/opencode-dynamic-context-pruning
+cd opencode-dynamic-context-pruning
 
-### Compress
+# 安装依赖
+npm install
 
-Compress is a tool exposed to your model that replaces closed, stale conversation content with high-fidelity technical summaries. You can think of this as a much smarter version of Opencode's compaction process. Instead of triggering statically when your session reaches its maximum context and on the entire coding session, Compress allows the model to pick when to activate based on task completion, and to only compress the specific messages that are no longer needed verbatim.
+# 构建
+node build-local.mjs
 
-DCP supports two compression modes:
+# 安装插件
+opencode plugin . --force
+```
 
-- `range` mode compresses contiguous spans of conversation into one or more summaries.
-- `message` mode (experimental) compresses individual raw messages independently, letting the model manage context much more surgically.
+### 从 npm 安装（原版）
 
-In `range` mode, when a new compression overlaps an earlier one, the earlier summary is nested inside the new one so information is preserved through layers of compression rather than diluted away. In both modes, protected tool outputs (such as subagents and skills) and protected file patterns are kept in compression summaries, ensuring that the most important information is never lost. You can also enable `protectUserMessages` to preserve your messages verbatim during compression, though note that large prompts (e.g. copy-pasting log files in the prompt) will then never be compressed away.
+需要原发布者权限：
 
-### Deduplication
+```bash
+opencode plugin @tarquinen/opencode-dcp --global
+```
 
-Identifies repeated tool calls (same tool, same arguments) and keeps only the most recent output. Recalculated when the compress tool runs, so prompt cache is only impacted alongside compression.
+## 配置
 
-### Purge Errors
+DCP 使用独立的配置文件 `dcp.jsonc`，按以下顺序覆盖：
 
-Prunes inputs from errored tool calls after a configurable number of turns (default: 4). Error messages are preserved; only the potentially large input content is removed. Recalculated on compress tool use.
+1. **全局**：`~/.config/opencode/dcp.jsonc`（首次运行自动生成）
+2. **自定义**：`$OPENCODE_CONFIG_DIR/dcp.jsonc`
+3. **项目**：`.opencode/dcp.jsonc`
 
-## Configuration
-
-DCP uses its own config file, searched in order:
-
-1. Global: `~/.config/opencode/dcp.jsonc` (or `dcp.json`), created automatically on first run
-2. Custom config directory: `$OPENCODE_CONFIG_DIR/dcp.jsonc` (or `dcp.json`), if `OPENCODE_CONFIG_DIR` is set
-3. Project: `.opencode/dcp.jsonc` (or `dcp.json`) in your project's `.opencode` directory
-
-Each level overrides the previous, so project settings take priority over global. Restart OpenCode after making config changes.
-
-> [!NOTE]
-> If you use models with smaller context windows, such as GitHub Copilot models or local models, lower `compress.minContextLimit` and `compress.maxContextLimit` in your configuration to match the available context.
-
-> [!IMPORTANT]
-> Defaults are applied automatically. Expand this if you want to review or override settings.
-
-<details>
-<summary><strong>Default Configuration</strong> (click to expand)</summary>
+配置示例（`~/.config/opencode/dcp.jsonc`）：
 
 ```jsonc
 {
-    "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
-    // Enable or disable the plugin
-    "enabled": true,
-    // Automatically update npm-installed DCP when a newer npm latest is available.
-    // Version-locked plugin specs are not updated.
-    "autoUpdate": true,
-    // Enable debug logging to ~/.config/opencode/logs/dcp/
-    "debug": false,
-    // Notification display: "off", "minimal", or "detailed"
-    "pruneNotification": "detailed",
-    // Notification type: "chat" (in-conversation) or "toast" (system toast)
-    "pruneNotificationType": "chat",
-    // Slash commands configuration
-    "commands": {
-        "enabled": true,
-        // Additional tools to protect from pruning via commands (e.g., /dcp sweep)
-        "protectedTools": [],
-    },
-    // Manual mode: disables autonomous context management,
-    // tools only run when explicitly triggered via /dcp commands
-    "manualMode": {
-        "enabled": false,
-        // When true, automatic cleanup (deduplication, purgeErrors)
-        // still runs even in manual mode
-        "automaticStrategies": true,
-    },
-    // Protect from pruning for <turns> message turns past tool invocation
-    "turnProtection": {
-        "enabled": false,
-        "turns": 4,
-    },
-    // Experimental settings
-    "experimental": {
-        // Allow DCP processing in subagent sessions
-        "allowSubAgents": false,
-        // Enable user-editable prompt overrides under dcp-prompts directories
-        // When false (default), prompt override files/directories are ignored
-        "customPrompts": false,
-    },
-    // Protect file operations from pruning via glob patterns
-    // Patterns match tool parameters.filePath (e.g. read/write/edit)
-    "protectedFilePatterns": [],
-    // Unified context compression tool and behavior settings
     "compress": {
-        // Compression mode: "range" (compress spans into block summaries)
-        // or experimental "message" (compress individual raw messages)
-        "mode": "range",
-        // Permission mode: "allow" (no prompt), "ask" (prompt), "deny" (tool not registered)
-        "permission": "allow",
-        // Show compression content in a chat notification
-        "showCompression": false,
-        // Let active summary tokens extend the effective maxContextLimit
-        "summaryBuffer": true,
-        // Soft upper threshold: above this, DCP keeps injecting strong
-        // compression nudges (based on nudgeFrequency), so compression is
-        // much more likely. Accepts: number or "X%" of model context window.
-        "maxContextLimit": 100000,
-        // Soft lower threshold for reminder nudges: below this, turn/iteration
-        // reminders are off (compression less likely). At/above this, reminders
-        // are on. Accepts: number or "X%" of model context window.
-        "minContextLimit": 50000,
-        // Optional per-model override for maxContextLimit by providerID/modelID.
-        // If present, this wins over the global maxContextLimit.
-        // Accepts: number or "X%".
-        // Example:
-        // "modelMaxLimits": {
-        //     "openai/gpt-5.3-codex": 120000,
-        //     "anthropic/claude-sonnet-4.6": "80%"
-        // },
-        // Optional per-model override for minContextLimit.
-        // If present, this wins over the global minContextLimit.
-        // "modelMinLimits": {
-        //     "openai/gpt-5.3-codex": 50000,
-        //     "anthropic/claude-sonnet-4.6": "25%"
-        // },
-        // How often the context-limit nudge fires (1 = every fetch, 5 = every 5th)
-        "nudgeFrequency": 5,
-        // Start adding compression reminders after this many
-        // messages have happened since the last user message
-        "iterationNudgeThreshold": 15,
-        // Controls how likely compression is after user messages
-        // ("strong" = more likely, "soft" = less likely)
-        "nudgeForce": "soft",
-        // Tool names whose completed outputs are appended to the compression
-        "protectedTools": [],
-        // Preserve text wrapped in <protect>...</protect> when compressed
-        "protectTags": false,
-        // Preserve your messages during compression.
-        // Warning: large copy-pasted prompts will never be compressed away
-        "protectUserMessages": false,
+        "lang": "zh",                   // 界面语言：en / zh
+        "permission": "allow",          // allow / ask / deny
+        "autonomousPurge": true,        // 允许 AI 自主调用 purge 工具
+        
+        "maxContextLimit": 100000,      // 上下文软上限（超过后强提醒压缩）
+        "minContextLimit": 50000,       // 上下文软下限（低于此值不提醒）
+        "nudgeFrequency": 5,            // 压缩提醒频率（1=每次请求都提醒）
+        "nudgeForce": "soft",           // 提醒强度：soft / strong
+        "mode": "range",                // 压缩模式：range / message
+        "showCompression": false,       // 显示压缩摘要通知
+        "protectUserMessages": false,   // 保护用户消息不被压缩
+        "protectTags": false            // 保护 <protect> 标签内容
     },
-    // Automatic pruning strategies
+    "manualMode": {
+        "enabled": true,               // 启用手动模式
+        "automaticStrategies": true    // 手动模式下仍运行自动策略
+    },
     "strategies": {
-        // Remove duplicate tool calls (same tool with same arguments)
-        "deduplication": {
-            "enabled": true,
-            // Additional tools to protect from pruning
-            "protectedTools": [],
-        },
-        // Prune tool inputs for errored tools after X turns
-        "purgeErrors": {
-            "enabled": true,
-            // Number of turns before errored tool inputs are pruned
-            "turns": 4,
-            // Additional tools to protect from pruning
-            "protectedTools": [],
-        },
-    },
+        "deduplication": { "enabled": true },
+        "purgeErrors": { "enabled": true, "turns": 4 }
+    }
 }
 ```
 
-</details>
+## 命令
 
-### Commands
+### 手动压缩
 
-DCP provides a TUI panel and one prompt-producing slash command:
+| 命令 | 说明 |
+|------|------|
+| `/dcp-compress [焦点]` | 手动触发一次压缩，可选焦点指定压缩范围 |
+| `/dcp-purge` | **极限清理**：AI 可删除或压缩任意内容，无任何保护限制 |
+| `/dcp-sweep [n]` | 清理上次用户消息后的工具输出，可指定数量 |
 
-- `/dcp` — Opens the DCP panel with context, stats, and manual-mode controls.
-- `/dcp-compress [focus]` — Asks the model to run one compression pass. Optional focus text directs what content to compress, following the active `compress.mode`.
+### 信息查看
 
-### Prompt Overrides
+| 命令 | 说明 |
+|------|------|
+| `/dcp-context` | 查看当前会话 Token 用量详情 |
+| `/dcp-stats` | 查看 DCP 清理统计 |
+| `/dcp-help` | 显示帮助信息 |
 
-DCP exposes six editable prompts:
+### 管理
 
-- `system`
-- `compress-range`
-- `compress-message`
-- `context-limit-nudge`
-- `turn-nudge`
-- `iteration-nudge`
+| 命令 | 说明 |
+|------|------|
+| `/dcp-manual [on/off]` | 切换手动模式 |
+| `/dcp-decompress <n>` | 恢复指定压缩块 |
+| `/dcp-recompress <n>` | 重新压缩已解压的块 |
+| `/dcp-panel` | 打开 DCP 设置面板（TUI） |
 
-This feature is disabled by default. Set `experimental.customPrompts` to `true` in your DCP config to activate it.
+## 工作流程
 
-When enabled, managed defaults are written to `~/.config/opencode/dcp-prompts/defaults/` as plain-text prompt files. A single `README.md` in that directory explains each prompt and how to create overrides.
+推荐的日常使用流程：
 
-To customize behavior, add a file with the same name under an overrides directory and edit it as plain text.
+```
+# 1. 启用手动模式（可选）
+/dcp-manual on
 
-To reset an override, delete the matching file from your overrides directory.
+# 2. 正常对话，AI 不会自动压缩
 
-### Protected Tools
+# 3. 上下文太大时先清理工具输出
+/dcp-sweep
 
-By default, these tools are always protected from pruning:
-`task`, `skill`, `todowrite`, `todoread`, `compress`, `batch`, `plan_enter`, `plan_exit`, `write`, `edit`
+# 4. 触发一次压缩
+/dcp-compress
 
-The `protectedTools` arrays in `commands` and `strategies` add to this default list.
+# 5. 需要激进清理时
+/dcp-purge
+```
 
-For the `compress` tool, `compress.protectedTools` ensures specific tool outputs are appended to the compressed summary. By default it includes `task`, `skill`, `todowrite`, and `todoread`.
+## 提示词覆盖
 
-## Impact on Prompt Caching
+启用 `experimental.customPrompts: true` 后可自定义 DCP 的提示词：
 
-LLM providers cache prompts based on exact prefix matching. When DCP prunes content, it changes messages, which invalidates cached prefixes from that point forward.
+- `system` — DCP 系统指令
+- `compress-range` — 范围压缩工具提示
+- `compress-message` — 消息压缩工具提示
+- `context-limit-nudge` / `turn-nudge` / `iteration-nudge` — 压缩提醒
 
-**Trade-off:** You lose some cache reads but gain token savings from reduced context size and fewer hallucinations from stale context. In most cases, especially in long sessions, the savings outweigh the cache miss cost.
-
-> [!NOTE]
-> In testing, cache hit rates were approximately 85% with DCP vs 90% without.
-
-**No impact for:**
-
-- **Request-based billing** — Providers like GitHub Copilot that charge per request, not tokens.
-- **Uniform token pricing** — Providers like Cerebras that bill cached and uncached tokens at the same rate.
+覆盖文件放在（优先级从高到低）：
+1. `.opencode/dcp-prompts/overrides/`
+2. `$OPENCODE_CONFIG_DIR/dcp-prompts/overrides/`
+3. `~/.config/opencode/dcp-prompts/overrides/`
 
 ## License
 
