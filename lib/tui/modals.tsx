@@ -29,7 +29,7 @@ export function openContextModal(api: TuiApi, config: PluginConfig) {
     runModal(api, t("Context", config.compress.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
-            showStatusDialog(api, "Context", "No session", "Open a session first.")
+            showStatusDialog(api, t("Context", config.compress.lang), t("No session", config.compress.lang), t("Open a session first.", config.compress.lang))
             return
         }
         showDialog(api, () => (
@@ -48,7 +48,7 @@ export function openStatsModal(api: TuiApi, config: PluginConfig) {
     runModal(api, t("Stats", config.compress.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
-            showStatusDialog(api, "Stats", "No session", "Open a session first.")
+            showStatusDialog(api, t("Stats", config.compress.lang), t("No session", config.compress.lang), t("Open a session first.", config.compress.lang))
             return
         }
         const report = await buildStatsReport(data.state, logger)
@@ -59,10 +59,10 @@ export function openStatsModal(api: TuiApi, config: PluginConfig) {
 }
 
 export function openPanelModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, "DCP", async () => {
+    runModal(api, t("DCP", config.compress.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
-            showStatusDialog(api, "DCP", "No session", "Open a session first.")
+            showStatusDialog(api, t("DCP", config.compress.lang), t("No session", config.compress.lang), t("Open a session first.", config.compress.lang))
             return
         }
         showDialog(api, () => (
@@ -81,7 +81,7 @@ export function openPanelModal(api: TuiApi, config: PluginConfig) {
 
 function runModal(api: TuiApi, title: string, task: () => Promise<void>, lang?: Lang) {
     showStatusDialog(api, title, "DCP", t("Loading...", lang ?? "en"))
-    void task().catch((error) => showError(api, title, error))
+    void task().catch((error) => showError(api, title, error, lang))
 }
 
 async function setManualMode(

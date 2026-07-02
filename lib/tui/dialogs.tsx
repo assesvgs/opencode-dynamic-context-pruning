@@ -40,7 +40,7 @@ export function ContextDialog(props: {
     const activePruned = breakdown.prunedToolCount + breakdown.prunedMessageCount
     const L = (s: string) => t(s, props.lang ?? "en")
     return (
-        <DcpFrame api={props.api} title="Context" eyebrow="DCP" onBack={props.onBack}>
+        <DcpFrame api={props.api} title={t("Context", props.lang ?? "en")} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang} onBack={props.onBack}>
             <Card theme={theme} title={L("Current")}>
                 <Metric
                     theme={theme}
@@ -104,7 +104,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
     const ratio = formatRatio(props.report.sessionTokens, props.report.sessionSummaryTokens)
     const L = (s: string) => t(s, props.lang ?? "en")
     return (
-        <DcpFrame api={props.api} title="Stats" eyebrow="DCP" onBack={props.onBack}>
+        <DcpFrame api={props.api} title={t("Stats", props.lang ?? "en")} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang} onBack={props.onBack}>
             <Card theme={theme} title="Session">
                 <Metric
                     theme={theme}
@@ -127,7 +127,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
                 <Metric theme={theme} label={L("Tools pruned")} value={`${props.report.sessionTools}`} />
                 <Metric
                     theme={theme}
-                    label="Messages pruned"
+                    label={L("Messages pruned")}
                     value={`${props.report.sessionMessages}`}
                 />
             </Card>
@@ -145,7 +145,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
                 />
                 <Metric
                     theme={theme}
-                    label="Messages pruned"
+                    label={L("Messages pruned")}
                     value={`${props.report.allTime.totalMessages}`}
                 />
                 <Metric
@@ -170,24 +170,24 @@ export function PanelDialog(props: {
     const theme = props.api.theme.current
     const canCompress = compressPermission(props.state, props.config) !== "deny"
     return (
-        <DcpFrame api={props.api} eyebrow="DCP">
+        <DcpFrame api={props.api} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang}>
             <Card theme={theme} title="Views">
                 <box flexDirection="column" gap={1}>
                     <ActionRow
                         theme={theme}
-                        title="Context"
-                        detail="Token usage"
+                        title={t("Context", props.lang ?? "en")}
+                        detail={t("Token usage", props.lang ?? "en")}
                         onClick={props.onContext}
                     />
                     <ActionRow
                         theme={theme}
-                        title="Stats"
+                        title={t("Stats", props.lang ?? "en")}
                         detail="Savings"
                         onClick={props.onStats}
                     />
                 </box>
             </Card>
-            <Card theme={theme} title="Prompt">
+            <Card theme={theme} title={t("Prompt", props.lang ?? "en")}>
                 {canCompress ? (
                     <PromptRow
                         theme={theme}
@@ -199,11 +199,11 @@ export function PanelDialog(props: {
                     <text fg={theme.textMuted}>Compression is denied by permissions.</text>
                 )}
             </Card>
-            <Card theme={theme} title="Session State">
+            <Card theme={theme} title={t("Session State", props.lang ?? "en")}>
                 <ManualModeToggle api={props.api} state={props.state} onToggle={props.onManual} />
                 <StatusPill
                     theme={theme}
-                    label="Compression command"
+                    label={t("Compression command", props.lang ?? "en")}
                     value={canCompress ? "enabled" : "disabled"}
                     accent={canCompress ? "success" : "warning"}
                 />

@@ -51,7 +51,7 @@ jobs:
                     const pkg = require('./package.json');
                     pkg.main = './index.js';
                     pkg.types = './index.d.ts';
-                    pkg.exports = { '.': { types: './index.d.ts', import: './index.js' } };
+                    pkg.exports = { ...pkg.exports, '.': { types: './index.d.ts', import: './index.js' } };
                     delete pkg.scripts;
                     delete pkg.devDependencies;
                     delete pkg.overrides;
