@@ -99,31 +99,32 @@ export function ContextDialog(props: {
     )
 }
 
-export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: () => void }) {
+export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: () => void; lang?: Lang }) {
     const theme = props.api.theme.current
     const ratio = formatRatio(props.report.sessionTokens, props.report.sessionSummaryTokens)
+    const L = (s: string) => t(s, props.lang ?? "en")
     return (
         <DcpFrame api={props.api} title="Stats" eyebrow="DCP" onBack={props.onBack}>
             <Card theme={theme} title="Session">
                 <Metric
                     theme={theme}
-                    label="Tokens saved"
+                    label={L("Tokens saved")}
                     value={`~${formatTokenCount(props.report.sessionTokens)}`}
                     hint="tokens"
                 />
                 <Metric
                     theme={theme}
-                    label="Summary size"
+                    label={L("Summary size")}
                     value={`~${formatTokenCount(props.report.sessionSummaryTokens)}`}
                     hint="tokens"
                 />
-                <Metric theme={theme} label="Compression ratio" value={ratio} />
+                <Metric theme={theme} label={L("Compression ratio")} value={ratio} />
                 <Metric
                     theme={theme}
-                    label="Compression time"
+                    label={L("Compression time")}
                     value={formatDuration(props.report.sessionDurationMs)}
                 />
-                <Metric theme={theme} label="Tools pruned" value={`${props.report.sessionTools}`} />
+                <Metric theme={theme} label={L("Tools pruned")} value={`${props.report.sessionTools}`} />
                 <Metric
                     theme={theme}
                     label="Messages pruned"
@@ -133,13 +134,13 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
             <Card theme={theme} title="All time">
                 <Metric
                     theme={theme}
-                    label="Tokens saved"
+                    label={L("Tokens saved")}
                     value={`~${formatTokenCount(props.report.allTime.totalTokens)}`}
                     hint="tokens"
                 />
                 <Metric
                     theme={theme}
-                    label="Tools pruned"
+                    label={L("Tools pruned")}
                     value={`${props.report.allTime.totalTools}`}
                 />
                 <Metric
@@ -149,7 +150,7 @@ export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: (
                 />
                 <Metric
                     theme={theme}
-                    label="Sessions with DCP history"
+                    label={L("Sessions with DCP history")}
                     value={`${props.report.allTime.sessionCount}`}
                 />
             </Card>

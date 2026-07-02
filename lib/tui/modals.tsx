@@ -20,13 +20,13 @@ export function showStatusDialog(api: TuiApi, title: string, eyebrow: string, me
     ))
 }
 
-export function showError(api: TuiApi, title: string, error: unknown) {
+export function showError(api: TuiApi, title: string, error: unknown, lang?: Lang) {
     const message = error instanceof Error ? error.message : String(error)
-    showStatusDialog(api, title, "DCP Error", message || "Command failed.")
+    showStatusDialog(api, title, t("DCP Error", lang ?? "en"), message || t("Command failed.", lang ?? "en"))
 }
 
 export function openContextModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, "Context", async () => {
+    runModal(api, t("Context", config.compress.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
             showStatusDialog(api, "Context", "No session", "Open a session first.")
@@ -45,7 +45,7 @@ export function openContextModal(api: TuiApi, config: PluginConfig) {
 }
 
 export function openStatsModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, "Stats", async () => {
+    runModal(api, t("Stats", config.compress.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
             showStatusDialog(api, "Stats", "No session", "Open a session first.")
@@ -53,7 +53,7 @@ export function openStatsModal(api: TuiApi, config: PluginConfig) {
         }
         const report = await buildStatsReport(data.state, logger)
         showDialog(api, () => (
-            <StatsDialog api={api} report={report} onBack={() => openPanelModal(api, config)} />
+            <StatsDialog api={api} report={report} onBack={() => openPanelModal(api, config)} lang={config.compress.lang} />
         ))
     })
 }
