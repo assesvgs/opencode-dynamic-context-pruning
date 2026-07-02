@@ -43,9 +43,13 @@ jobs:
             - name: Build
               run: npm run build
 
+            - name: Set short SHA
+              id: vars
+              run: echo "short_sha=${GITHUB_SHA:0:8}" >> "$GITHUB_OUTPUT"
+
             - name: Upload build artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: dist
+                  name: dcp-${{ steps.vars.outputs.short_sha }}
                   path: dist/
                   if-no-files-found: error
