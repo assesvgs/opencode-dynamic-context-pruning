@@ -786,7 +786,7 @@ function createDefaultConfig(): void {
 
     const cfg = defaultConfig
     const configContent = `{
-  "\\$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
   "enabled": ${cfg.enabled},
   "autoUpdate": ${cfg.autoUpdate},
   "debug": ${cfg.debug},

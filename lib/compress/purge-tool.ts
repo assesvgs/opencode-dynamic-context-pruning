@@ -1,38 +1,20 @@
 import { tool } from "@opencode-ai/plugin"
 import type { ToolContext } from "./types"
 import { PURGE } from "../prompts/purge"
-import { RANGE_FORMAT_EXTENSION } from "../prompts/extensions/tool"
+import { RANGE_FORMAT_EXTENSION, MESSAGE_FORMAT_EXTENSION } from "../prompts/extensions/tool"
 import { createCompressRangeTool } from "./range"
+import { createCompressMessageTool } from "./message"
 
 export function createPurgeTool(ctx: ToolContext): ReturnType<typeof tool> {
-    const internal = createCompressRangeTool(ctx)
+    const isMessageMode = ctx.config.compress.mode === "message"
+
+    const internal = isMessageMode ? createCompressMessageTool(ctx) : createCompressRangeTool(ctx)
+
+    const formatExtension = isMessageMode ? MESSAGE_FORMAT_EXTENSION : RANGE_FORMAT_EXTENSION
 
     return tool({
-        description: PURGE + RANGE_FORMAT_EXTENSION,
-        args: {
-            topic: tool.schema
-                .string()
-                .describe("Short label (3-5 words) for display - e.g., 'Auth System Exploration'"),
-            content: tool.schema
-                .array(
-                    tool.schema.object({
-                        startId: tool.schema
-                            .string()
-                            .describe(
-                                "Message or block ID marking the beginning of range (e.g. m0001, b2)",
-                            ),
-                        endId: tool.schema
-                            .string()
-                            .describe(
-                                "Message or block ID marking the end of range (e.g. m0012, b5)",
-                            ),
-                        summary: tool.schema.string().describe("Summary or [purged] to delete"),
-                    }),
-                )
-                .describe(
-                    "One or more ranges to compress, each with start/end boundaries and a summary",
-                ),
-        },
+        description: PURGE + formatExtension,
+        args: internal.args,
         async execute(args, toolCtx) {
             ctx.state.purgeMode = true
             try {
