@@ -39,9 +39,11 @@ const TOOL_COMMANDS: Record<string, [string, string]> = {
 function getVisibleCommands(state: SessionState, config: PluginConfig): [string, string][] {
     const commands = [...TUI_COMMANDS]
 
-    if (compressPermission(state, config) !== "deny") {
-        commands.push(TOOL_COMMANDS.compress)
+    if (compressPermission(state, config) === "deny") {
+        return commands
     }
+
+    commands.push(TOOL_COMMANDS.compress)
     commands.push(TOOL_COMMANDS.context)
     commands.push(TOOL_COMMANDS.stats)
     commands.push(TOOL_COMMANDS.sweep)
