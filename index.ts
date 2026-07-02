@@ -98,12 +98,24 @@ const server: Plugin = (async (ctx) => {
                 opencodeConfig.command ??= {}
                 opencodeConfig.command["dcp-compress"] = {
                     template: "",
-                    description: "Trigger DCP manual compression with: /dcp-compress [focus]",
+                    description: "Trigger DCP manual compression",
                 }
-                opencodeConfig.command["dcp"] = {
-                    template: "",
-                    description:
-                        "DCP commands: sweep, context, stats, manual, purge, decompress, recompress, help",
+                const subcommands: [string, string][] = [
+                    [
+                        "dcp",
+                        "DCP commands: sweep, context, stats, manual, purge, decompress, recompress",
+                    ],
+                    ["dcp-sweep", "Prune tool outputs since last user message"],
+                    ["dcp-context", "Show token usage breakdown for current session"],
+                    ["dcp-stats", "Show DCP pruning statistics"],
+                    ["dcp-manual", "Toggle manual mode on/off"],
+                    ["dcp-purge", "Aggressive cleanup: delete or compress any content"],
+                    ["dcp-decompress", "Restore selected compression"],
+                    ["dcp-recompress", "Re-apply a user-decompressed compression"],
+                    ["dcp-help", "Show DCP command help"],
+                ]
+                for (const [name, desc] of subcommands) {
+                    opencodeConfig.command[name] = { template: "", description: desc }
                 }
             }
 

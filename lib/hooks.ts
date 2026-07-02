@@ -173,7 +173,13 @@ export function createCommandExecuteHandler(
             return
         }
 
-        if (input.command === "dcp" || input.command === "dcp-compress") {
+        const DCP_COMMAND_PREFIX = "dcp-"
+        const isDcpCommand =
+            input.command === "dcp" ||
+            input.command === "dcp-compress" ||
+            input.command.startsWith(DCP_COMMAND_PREFIX)
+
+        if (isDcpCommand) {
             const messagesResponse = await client.session.messages({
                 path: { id: input.sessionID },
             })
@@ -196,9 +202,23 @@ export function createCommandExecuteHandler(
             }
 
             const args = (input.arguments || "").trim().split(/\s+/).filter(Boolean)
-            const isCompressCommand = input.command === "dcp-compress"
-            const subcommand = isCompressCommand ? "compress" : args[0]?.toLowerCase() || ""
-            const subArgs = isCompressCommand ? args : args.slice(1)
+            let subcommand: string
+            let subArgs: string[]
+            let rawCommand: string
+
+            if (input.command === "dcp-compress") {
+                subcommand = "compress"
+                subArgs = args
+                rawCommand = "/dcp-compress"
+            } else if (input.command.startsWith(DCP_COMMAND_PREFIX)) {
+                subcommand = input.command.slice(DCP_COMMAND_PREFIX.length)
+                subArgs = args
+                rawCommand = `/dcp-${subcommand}`
+            } else {
+                subcommand = args[0]?.toLowerCase() || ""
+                subArgs = args.slice(1)
+                rawCommand = "/dcp"
+            }
 
             const commandCtx = {
                 client,
@@ -241,11 +261,10 @@ export function createCommandExecuteHandler(
                     sessionId: input.sessionID,
                     prompt,
                 }
-                const rawArgs = (input.arguments || "").trim()
                 output.parts.length = 0
                 output.parts.push({
                     type: "text",
-                    text: rawArgs ? `/dcp purge ${rawArgs}` : "/dcp purge",
+                    text: rawCommand,
                 })
                 return
             }
@@ -266,13 +285,7 @@ export function createCommandExecuteHandler(
                 output.parts.length = 0
                 output.parts.push({
                     type: "text",
-                    text: isCompressCommand
-                        ? rawArgs
-                            ? `/dcp-compress ${rawArgs}`
-                            : "/dcp-compress"
-                        : rawArgs
-                          ? `/dcp ${rawArgs}`
-                          : `/dcp ${subcommand}`,
+                    text: rawArgs ? `${rawCommand} ${rawArgs}` : rawCommand,
                 })
                 return
             }
