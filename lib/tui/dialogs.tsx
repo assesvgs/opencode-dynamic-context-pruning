@@ -1,241 +1,292 @@
 /** @jsxImportSource @opentui/solid */
 
-import { compressPermission } from "../compress-permission"
-import { analyzeContextTokens } from "../commands/context"
-import type { PluginConfig } from "../config"
-import type { SessionState, WithParts } from "../state"
-import { formatTokenCount } from "../ui/utils"
-import { TextAttributes } from "@opentui/core"
-import { formatDuration, formatRatio } from "./format"
-import { ActionRow, Card, DcpFrame, Metric, Progress, PromptRow, StatusPill } from "./ui"
-import type { StatsReport, TuiApi } from "./types"
-import type { Lang } from "../i18n"
-import { t } from "../i18n"
+import { compressPermission } from "../compress-permission";
+import { analyzeContextTokens } from "../commands/context";
+import type { PluginConfig } from "../config";
+import type { SessionState, WithParts } from "../state";
+import { formatTokenCount } from "../ui/utils";
+import { TextAttributes } from "@opentui/core";
+import { formatDuration, formatRatio } from "./format";
+import {
+  ActionRow,
+  Card,
+  DcpFrame,
+  Metric,
+  Progress,
+  PromptRow,
+  StatusPill,
+} from "./ui";
+import type { StatsReport, TuiApi } from "./types";
+import type { Lang } from "../i18n";
+import { t } from "../i18n";
 
 export function StatusDialog(props: {
-    api: TuiApi
-    title: string
-    eyebrow: string
-    message: string
+  api: TuiApi;
+  title: string;
+  eyebrow: string;
+  message: string;
 }) {
-    return (
-        <DcpFrame api={props.api} title={props.title} eyebrow={props.eyebrow}>
-            <box paddingTop={1} paddingBottom={1}>
-                <text fg={props.api.theme.current.textMuted}>{props.message}</text>
-            </box>
-        </DcpFrame>
-    )
+  return (
+    <DcpFrame api={props.api} title={props.title} eyebrow={props.eyebrow}>
+      <box paddingTop={1} paddingBottom={1}>
+        <text fg={props.api.theme.current.textMuted}>{props.message}</text>
+      </box>
+    </DcpFrame>
+  );
 }
 
 export function ContextDialog(props: {
-    api: TuiApi
-    state: SessionState
-    messages: WithParts[]
-    onBack: () => void
-    lang?: Lang
+  api: TuiApi;
+  state: SessionState;
+  messages: WithParts[];
+  onBack: () => void;
+  lang?: Lang;
 }) {
-    const theme = props.api.theme.current
-    const breakdown = analyzeContextTokens(props.state, props.messages)
-    const total = Math.max(0, breakdown.total)
-    const activePruned = breakdown.prunedToolCount + breakdown.prunedMessageCount
-    const L = (s: string) => t(s, props.lang ?? "en")
-    return (
-        <DcpFrame api={props.api} title={t("Context", props.lang ?? "en")} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang} onBack={props.onBack}>
-            <Card theme={theme} title={L("Current")}>
-                <Metric
-                    theme={theme}
-                    label={L("Total in context")}
-                    value={`~${formatTokenCount(total)}`}
-                    hint="tokens"
-                />
-                <Metric
-                    theme={theme}
-                    label={L("Tools in context")}
-                    value={`${breakdown.toolsInContextCount}`}
-                />
-                <Metric theme={theme} label={L("Active pruned targets")} value={`${activePruned}`} />
-                <Metric
-                    theme={theme}
-                    label={L("Tokens pruned")}
-                    value={`~${formatTokenCount(breakdown.prunedTokens)}`}
-                    hint="tokens"
-                />
-            </Card>
-            <Card theme={theme} title={L("Breakdown")}>
-                <Progress
-                    theme={theme}
-                    label={L("System")}
-                    value={breakdown.system}
-                    total={total}
-                    color="primary"
-                    detail={`~${formatTokenCount(breakdown.system)} tokens`}
-                />
-                <Progress
-                    theme={theme}
-                    label={L("User")}
-                    value={breakdown.user}
-                    total={total}
-                    color="primary"
-                    detail={`~${formatTokenCount(breakdown.user)} tokens`}
-                />
-                <Progress
-                    theme={theme}
-                    label={L("Assistant")}
-                    value={breakdown.assistant}
-                    total={total}
-                    color="primary"
-                    detail={`~${formatTokenCount(breakdown.assistant)} tokens`}
-                />
-                <Progress
-                    theme={theme}
-                    label={`Tools (${breakdown.toolsInContextCount})`}
-                    value={breakdown.tools}
-                    total={total}
-                    color="primary"
-                    detail={`~${formatTokenCount(breakdown.tools)} tokens`}
-                />
-            </Card>
-        </DcpFrame>
-    )
+  const theme = props.api.theme.current;
+  const breakdown = analyzeContextTokens(props.state, props.messages);
+  const total = Math.max(0, breakdown.total);
+  const activePruned = breakdown.prunedToolCount + breakdown.prunedMessageCount;
+  const L = (s: string) => t(s, props.lang ?? "en");
+  return (
+    <DcpFrame
+      api={props.api}
+      title={t("Context", props.lang ?? "en")}
+      eyebrow={t("DCP", props.lang ?? "en")}
+      lang={props.lang}
+      onBack={props.onBack}
+    >
+      <Card theme={theme} title={L("Current")}>
+        <Metric
+          theme={theme}
+          label={L("Total in context")}
+          value={`~${formatTokenCount(total)}`}
+          hint="tokens"
+        />
+        <Metric
+          theme={theme}
+          label={L("Tools in context")}
+          value={`${breakdown.toolsInContextCount}`}
+        />
+        <Metric
+          theme={theme}
+          label={L("Active pruned targets")}
+          value={`${activePruned}`}
+        />
+        <Metric
+          theme={theme}
+          label={L("Tokens pruned")}
+          value={`~${formatTokenCount(breakdown.prunedTokens)}`}
+          hint="tokens"
+        />
+      </Card>
+      <Card theme={theme} title={L("Breakdown")}>
+        <Progress
+          theme={theme}
+          label={L("System")}
+          value={breakdown.system}
+          total={total}
+          color="primary"
+          detail={`~${formatTokenCount(breakdown.system)} tokens`}
+        />
+        <Progress
+          theme={theme}
+          label={L("User")}
+          value={breakdown.user}
+          total={total}
+          color="primary"
+          detail={`~${formatTokenCount(breakdown.user)} tokens`}
+        />
+        <Progress
+          theme={theme}
+          label={L("Assistant")}
+          value={breakdown.assistant}
+          total={total}
+          color="primary"
+          detail={`~${formatTokenCount(breakdown.assistant)} tokens`}
+        />
+        <Progress
+          theme={theme}
+          label={`Tools (${breakdown.toolsInContextCount})`}
+          value={breakdown.tools}
+          total={total}
+          color="primary"
+          detail={`~${formatTokenCount(breakdown.tools)} tokens`}
+        />
+      </Card>
+    </DcpFrame>
+  );
 }
 
-export function StatsDialog(props: { api: TuiApi; report: StatsReport; onBack: () => void; lang?: Lang }) {
-    const theme = props.api.theme.current
-    const ratio = formatRatio(props.report.sessionTokens, props.report.sessionSummaryTokens)
-    const L = (s: string) => t(s, props.lang ?? "en")
-    return (
-        <DcpFrame api={props.api} title={t("Stats", props.lang ?? "en")} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang} onBack={props.onBack}>
-            <Card theme={theme} title={L("Session")}>
-                <Metric
-                    theme={theme}
-                    label={L("Tokens saved")}
-                    value={`~${formatTokenCount(props.report.sessionTokens)}`}
-                    hint="tokens"
-                />
-                <Metric
-                    theme={theme}
-                    label={L("Summary size")}
-                    value={`~${formatTokenCount(props.report.sessionSummaryTokens)}`}
-                    hint="tokens"
-                />
-                <Metric theme={theme} label={L("Compression ratio")} value={ratio} />
-                <Metric
-                    theme={theme}
-                    label={L("Compression time")}
-                    value={formatDuration(props.report.sessionDurationMs)}
-                />
-                <Metric theme={theme} label={L("Tools pruned")} value={`${props.report.sessionTools}`} />
-                <Metric
-                    theme={theme}
-                    label={L("Messages pruned")}
-                    value={`${props.report.sessionMessages}`}
-                />
-            </Card>
-            <Card theme={theme} title={L("All time")}>
-                <Metric
-                    theme={theme}
-                    label={L("Tokens saved")}
-                    value={`~${formatTokenCount(props.report.allTime.totalTokens)}`}
-                    hint="tokens"
-                />
-                <Metric
-                    theme={theme}
-                    label={L("Tools pruned")}
-                    value={`${props.report.allTime.totalTools}`}
-                />
-                <Metric
-                    theme={theme}
-                    label={L("Messages pruned")}
-                    value={`${props.report.allTime.totalMessages}`}
-                />
-                <Metric
-                    theme={theme}
-                    label={L("Sessions with DCP history")}
-                    value={`${props.report.allTime.sessionCount}`}
-                />
-            </Card>
-        </DcpFrame>
-    )
+export function StatsDialog(props: {
+  api: TuiApi;
+  report: StatsReport;
+  onBack: () => void;
+  lang?: Lang;
+}) {
+  const theme = props.api.theme.current;
+  const ratio = formatRatio(
+    props.report.sessionTokens,
+    props.report.sessionSummaryTokens,
+  );
+  const L = (s: string) => t(s, props.lang ?? "en");
+  return (
+    <DcpFrame
+      api={props.api}
+      title={t("Stats", props.lang ?? "en")}
+      eyebrow={t("DCP", props.lang ?? "en")}
+      lang={props.lang}
+      onBack={props.onBack}
+    >
+      <Card theme={theme} title={L("Session")}>
+        <Metric
+          theme={theme}
+          label={L("Tokens saved")}
+          value={`~${formatTokenCount(props.report.sessionTokens)}`}
+          hint="tokens"
+        />
+        <Metric
+          theme={theme}
+          label={L("Summary size")}
+          value={`~${formatTokenCount(props.report.sessionSummaryTokens)}`}
+          hint="tokens"
+        />
+        <Metric theme={theme} label={L("Compression ratio")} value={ratio} />
+        <Metric
+          theme={theme}
+          label={L("Compression time")}
+          value={formatDuration(props.report.sessionDurationMs)}
+        />
+        <Metric
+          theme={theme}
+          label={L("Tools pruned")}
+          value={`${props.report.sessionTools}`}
+        />
+        <Metric
+          theme={theme}
+          label={L("Messages pruned")}
+          value={`${props.report.sessionMessages}`}
+        />
+      </Card>
+      <Card theme={theme} title={L("All time")}>
+        <Metric
+          theme={theme}
+          label={L("Tokens saved")}
+          value={`~${formatTokenCount(props.report.allTime.totalTokens)}`}
+          hint="tokens"
+        />
+        <Metric
+          theme={theme}
+          label={L("Tools pruned")}
+          value={`${props.report.allTime.totalTools}`}
+        />
+        <Metric
+          theme={theme}
+          label={L("Messages pruned")}
+          value={`${props.report.allTime.totalMessages}`}
+        />
+        <Metric
+          theme={theme}
+          label={L("Sessions with DCP history")}
+          value={`${props.report.allTime.sessionCount}`}
+        />
+      </Card>
+    </DcpFrame>
+  );
 }
 
 export function PanelDialog(props: {
-    api: TuiApi
-    state: SessionState
-    config: PluginConfig
-    onContext: () => void
-    onStats: () => void
-    onManual: (enabled: boolean) => void
-    lang?: Lang
+  api: TuiApi;
+  state: SessionState;
+  config: PluginConfig;
+  onContext: () => void;
+  onStats: () => void;
+  onManual: (enabled: boolean) => void;
+  lang?: Lang;
 }) {
-    const theme = props.api.theme.current
-    const canCompress = compressPermission(props.state, props.config) !== "deny"
-    return (
-        <DcpFrame api={props.api} eyebrow={t("DCP", props.lang ?? "en")} lang={props.lang}>
-            <Card theme={theme} title={t("Views", props.lang ?? "en")}>
-                <box flexDirection="column" gap={1}>
-                    <ActionRow
-                        theme={theme}
-                        title={t("Context", props.lang ?? "en")}
-                        detail={t("Token usage", props.lang ?? "en")}
-                        onClick={props.onContext}
-                    />
-                    <ActionRow
-                        theme={theme}
-                        title={t("Stats", props.lang ?? "en")}
-                        detail={t("Savings", props.lang ?? "en")}
-                        onClick={props.onStats}
-                    />
-                </box>
-            </Card>
-            <Card theme={theme} title={t("Prompt", props.lang ?? "en")}>
-                {canCompress ? (
-                    <PromptRow
-                        theme={theme}
-                        command="/dcp-compress [focus]"
-                        description="Ask the model to compress"
-                        accent="primary"
-                    />
-                ) : (
-                    <text fg={theme.textMuted}>{t("Compression is denied by permissions.", props.lang ?? "en")}</text>
-                )}
-            </Card>
-            <Card theme={theme} title={t("Session State", props.lang ?? "en")}>
-                <ManualModeToggle api={props.api} state={props.state} onToggle={props.onManual} />
-                <StatusPill
-                    theme={theme}
-                    label={t("Compression command", props.lang ?? "en")}
-                    value={canCompress ? "enabled" : "disabled"}
-                    accent={canCompress ? "success" : "warning"}
-                />
-            </Card>
-        </DcpFrame>
-    )
+  const theme = props.api.theme.current;
+  const canCompress = compressPermission(props.state, props.config) !== "deny";
+  return (
+    <DcpFrame
+      api={props.api}
+      eyebrow={t("DCP", props.lang ?? "en")}
+      lang={props.lang}
+    >
+      <Card theme={theme} title={t("Views", props.lang ?? "en")}>
+        <box flexDirection="column" gap={1}>
+          <ActionRow
+            theme={theme}
+            title={t("Context", props.lang ?? "en")}
+            detail={t("Token usage", props.lang ?? "en")}
+            onClick={props.onContext}
+          />
+          <ActionRow
+            theme={theme}
+            title={t("Stats", props.lang ?? "en")}
+            detail={t("Savings", props.lang ?? "en")}
+            onClick={props.onStats}
+          />
+        </box>
+      </Card>
+      <Card theme={theme} title={t("Prompt", props.lang ?? "en")}>
+        {canCompress ? (
+          <PromptRow
+            theme={theme}
+            command="/dcp-compress [focus]"
+            description="Ask the model to compress"
+            accent="primary"
+          />
+        ) : (
+          <text fg={theme.textMuted}>
+            {t("Compression is denied by permissions.", props.lang ?? "en")}
+          </text>
+        )}
+      </Card>
+      <Card theme={theme} title={t("Session State", props.lang ?? "en")}>
+        <ManualModeToggle
+          api={props.api}
+          state={props.state}
+          onToggle={props.onManual}
+        />
+        <StatusPill
+          theme={theme}
+          label={t("Compression command", props.lang ?? "en")}
+          value={canCompress ? "enabled" : "disabled"}
+          accent={canCompress ? "success" : "warning"}
+        />
+      </Card>
+    </DcpFrame>
+  );
 }
 
 function ManualModeToggle(props: {
-    lang?: Lang
-    api: TuiApi
-    state: SessionState
-    onToggle: (enabled: boolean) => void
+  lang?: Lang;
+  api: TuiApi;
+  state: SessionState;
+  onToggle: (enabled: boolean) => void;
 }) {
-    const theme = props.api.theme.current
-    const enabled = !!props.state.manualMode
-    const track = enabled ? theme.success : theme.error
-    return (
-        <box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
-            <box width={22}>
-                <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-                    {t("Manual mode", props.lang ?? "en")}
-                </text>
-            </box>
-            <box
-                backgroundColor={track}
-                paddingLeft={1}
-                paddingRight={1}
-                onMouseUp={() => props.onToggle(!enabled)}
-            >
-                <text fg={theme.background}>{enabled ? "   ■" : "■   "}</text>
-            </box>
-        </box>
-    )
+  const theme = props.api.theme.current;
+  const enabled = !!props.state.manualMode;
+  const track = enabled ? theme.success : theme.error;
+  return (
+    <box
+      flexDirection="row"
+      justifyContent="space-between"
+      paddingLeft={1}
+      paddingRight={1}
+    >
+      <box width={22}>
+        <text fg={theme.primary} attributes={TextAttributes.BOLD}>
+          {t("Manual mode", props.lang ?? "en")}
+        </text>
+      </box>
+      <box
+        backgroundColor={track}
+        paddingLeft={1}
+        paddingRight={1}
+        onMouseUp={() => props.onToggle(!enabled)}
+      >
+        <text fg={theme.background}>{enabled ? "   ■" : "■   "}</text>
+      </box>
+    </box>
+  );
 }
