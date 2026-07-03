@@ -5,15 +5,18 @@
 
 import type { Logger } from "../logger"
 import type { SessionState, WithParts } from "../state"
+import type { PluginConfig } from "../config"
 import { sendIgnoredMessage } from "../ui/notification"
 import { formatTokenCount } from "../ui/utils"
 import { loadAllSessionStats, type AggregatedStats } from "../state/persistence"
 import { getCurrentParams } from "../token-utils"
 import { getActiveCompressionTargets } from "./compression-targets"
+import { t, type Lang } from "../i18n"
 
 export interface StatsCommandContext {
     client: any
     state: SessionState
+    config: PluginConfig
     logger: Logger
     sessionId: string
     messages: WithParts[]
@@ -26,29 +29,32 @@ export function formatStatsMessage(
     sessionMessages: number,
     sessionDurationMs: number,
     allTime: AggregatedStats,
+    lang: Lang,
 ): string {
     const lines: string[] = []
 
     lines.push("╭───────────────────────────────────────────────────────────╮")
-    lines.push("│                    DCP Statistics                         │")
+    lines.push(`│  ${t("DCP Statistics", lang).padEnd(59)}│`)
     lines.push("╰───────────────────────────────────────────────────────────╯")
     lines.push("")
-    lines.push("Compression:")
+    lines.push(t("Compression:", lang))
     lines.push("─".repeat(60))
     lines.push(
-        `  Tokens in|out:    ~${formatTokenCount(sessionTokens)} | ~${formatTokenCount(sessionSummaryTokens)}`,
+        `  ${t("Tokens in|out:", lang).padEnd(19)}~${formatTokenCount(sessionTokens)} | ~${formatTokenCount(sessionSummaryTokens)}`,
     )
-    lines.push(`  Ratio:            ${formatCompressionRatio(sessionTokens, sessionSummaryTokens)}`)
-    lines.push(`  Time:             ${formatCompressionTime(sessionDurationMs)}`)
-    lines.push(`  Messages:         ${sessionMessages}`)
-    lines.push(`  Tools:            ${sessionTools}`)
+    lines.push(
+        `  ${t("Ratio:", lang).padEnd(19)}${formatCompressionRatio(sessionTokens, sessionSummaryTokens)}`,
+    )
+    lines.push(`  ${t("Time:", lang).padEnd(19)}${formatCompressionTime(sessionDurationMs)}`)
+    lines.push(`  ${t("Messages:", lang).padEnd(19)}${sessionMessages}`)
+    lines.push(`  ${t("Tools:", lang).padEnd(19)}${sessionTools}`)
     lines.push("")
-    lines.push("All-time:")
+    lines.push(t("All-time:", lang))
     lines.push("─".repeat(60))
-    lines.push(`  Tokens saved:    ~${formatTokenCount(allTime.totalTokens)}`)
-    lines.push(`  Tools pruned:     ${allTime.totalTools}`)
-    lines.push(`  Messages pruned:  ${allTime.totalMessages}`)
-    lines.push(`  Sessions:         ${allTime.sessionCount}`)
+    lines.push(`  ${t("Tokens saved:", lang).padEnd(19)}~${formatTokenCount(allTime.totalTokens)}`)
+    lines.push(`  ${t("Tools pruned:", lang).padEnd(19)}${allTime.totalTools}`)
+    lines.push(`  ${t("Messages pruned:", lang).padEnd(19)}${allTime.totalMessages}`)
+    lines.push(`  ${t("Sessions:", lang).padEnd(19)}${allTime.sessionCount}`)
 
     return lines.join("\n")
 }
@@ -90,7 +96,8 @@ function formatCompressionTime(ms: number): string {
 }
 
 export async function handleStatsCommand(ctx: StatsCommandContext): Promise<void> {
-    const { client, state, logger, sessionId, messages } = ctx
+    const { client, state, config, logger, sessionId, messages } = ctx
+    const lang = config.compress.lang
 
     const report = await buildStatsReport(state, logger)
     const message = formatStatsMessage(
@@ -100,6 +107,7 @@ export async function handleStatsCommand(ctx: StatsCommandContext): Promise<void
         report.sessionMessages,
         report.sessionDurationMs,
         report.allTime,
+        lang,
     )
 
     const params = getCurrentParams(state, messages, logger)

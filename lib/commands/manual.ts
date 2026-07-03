@@ -15,6 +15,8 @@ import { saveManualModeSetting } from "../state/persistence"
 import { getCurrentParams } from "../token-utils"
 import { buildCompressedBlockGuidance } from "../prompts/extensions/nudge"
 import { isIgnoredUserMessage } from "../messages/query"
+import { createSyntheticUserMessage } from "../messages/utils"
+import { t, type Lang } from "../i18n"
 
 const MANUAL_MODE_ON = "Manual mode is now ON. Use /dcp-compress to trigger context tools manually."
 
@@ -59,7 +61,8 @@ export async function handleManualToggleCommand(
     ctx: ManualCommandContext,
     modeArg?: string,
 ): Promise<void> {
-    const { client, state, logger, sessionId, messages } = ctx
+    const { client, state, logger, sessionId, messages, config } = ctx
+    const lang = config.compress.lang
 
     if (modeArg === "on") {
         state.manualMode = "active"
@@ -73,7 +76,7 @@ export async function handleManualToggleCommand(
     await sendIgnoredMessage(
         client,
         sessionId,
-        state.manualMode ? MANUAL_MODE_ON : MANUAL_MODE_OFF,
+        state.manualMode ? t(MANUAL_MODE_ON, lang) : t(MANUAL_MODE_OFF, lang),
         params,
         logger,
     )
@@ -119,10 +122,23 @@ export function applyPendingManualTrigger(
 
             part.text = pending.prompt
             state.pendingManualTrigger = null
-            // NOTE: purgeMode 保持 true，等待 AI 调用 compress 后由 finalizeSession 复位
             logger.debug("Applied manual prompt", { sessionId: pending.sessionId })
             return
         }
+    }
+
+    // Fallback: create a synthetic user message if no suitable user message found.
+    // This can happen when the command's output.parts message is filtered out
+    // or doesn't have the expected structure.
+    const baseMessage = messages.find((m) => m.info.role === "user" || m.info.role === "assistant")
+    if (baseMessage) {
+        const syntheticMsg = createSyntheticUserMessage(baseMessage, pending.prompt)
+        messages.push(syntheticMsg)
+        state.pendingManualTrigger = null
+        logger.debug("Created synthetic user message for manual trigger", {
+            sessionId: pending.sessionId,
+        })
+        return
     }
 
     state.pendingManualTrigger = null

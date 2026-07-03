@@ -42,16 +42,19 @@
 
 import type { Logger } from "../logger"
 import type { SessionState, WithParts } from "../state"
+import type { PluginConfig } from "../config"
 import { sendIgnoredMessage } from "../ui/notification"
 import { formatTokenCount } from "../ui/utils"
 import { isIgnoredUserMessage } from "../messages/query"
 import { isMessageCompacted } from "../state/utils"
 import { countTokens, extractCompletedToolOutput, getCurrentParams } from "../token-utils"
 import type { AssistantMessage, TextPart, ToolPart } from "@opencode-ai/sdk/v2"
+import { t, tn, type Lang } from "../i18n"
 
 export interface ContextCommandContext {
     client: any
     state: SessionState
+    config: PluginConfig
     logger: Logger
     sessionId: string
     messages: WithParts[]
@@ -235,26 +238,26 @@ function createBar(value: number, maxValue: number, width: number, char: string 
     return bar
 }
 
-export function formatContextMessage(breakdown: TokenBreakdown): string {
+export function formatContextMessage(breakdown: TokenBreakdown, lang: Lang): string {
     const lines: string[] = []
     const barWidth = 30
 
-    const toolsLabel = `Tools (${breakdown.toolsInContextCount})`
+    const toolsLabel = `${t("Tools", lang)} (${breakdown.toolsInContextCount})`
 
     const categories = [
-        { label: "System", value: breakdown.system, char: "█" },
-        { label: "User", value: breakdown.user, char: "▓" },
-        { label: "Assistant", value: breakdown.assistant, char: "▒" },
+        { label: t("System", lang), value: breakdown.system, char: "█" },
+        { label: t("User", lang), value: breakdown.user, char: "▓" },
+        { label: t("Assistant", lang), value: breakdown.assistant, char: "▒" },
         { label: toolsLabel, value: breakdown.tools, char: "░" },
     ] as const
 
     const maxLabelLen = Math.max(...categories.map((c) => c.label.length))
 
     lines.push("╭───────────────────────────────────────────────────────────╮")
-    lines.push("│                  DCP Context Analysis                     │")
+    lines.push(`│  ${t("DCP Context Analysis", lang).padEnd(59)}│`)
     lines.push("╰───────────────────────────────────────────────────────────╯")
     lines.push("")
-    lines.push("Session Context Breakdown:")
+    lines.push(t("Session Context Breakdown:", lang))
     lines.push("─".repeat(60))
     lines.push("")
 
@@ -271,21 +274,26 @@ export function formatContextMessage(breakdown: TokenBreakdown): string {
     lines.push("─".repeat(60))
     lines.push("")
 
-    lines.push("Summary:")
+    lines.push(t("Summary:", lang))
 
     if (breakdown.prunedTokens > 0) {
         const withoutPruning = breakdown.total + breakdown.prunedTokens
         const pruned = []
-        if (breakdown.prunedToolCount > 0) pruned.push(`${breakdown.prunedToolCount} tools`)
+        if (breakdown.prunedToolCount > 0)
+            pruned.push(tn("{n} tools", lang, breakdown.prunedToolCount))
         if (breakdown.prunedMessageCount > 0)
-            pruned.push(`${breakdown.prunedMessageCount} messages`)
+            pruned.push(tn("{n} messages", lang, breakdown.prunedMessageCount))
         lines.push(
-            `  Pruned:          ${pruned.join(", ")} (~${formatTokenCount(breakdown.prunedTokens)})`,
+            `  ${t("Pruned:", lang).padEnd(14)}${pruned.join(", ")} (~${formatTokenCount(breakdown.prunedTokens)})`,
         )
-        lines.push(`  Current context: ~${formatTokenCount(breakdown.total)}`)
-        lines.push(`  Without DCP:     ~${formatTokenCount(withoutPruning)}`)
+        lines.push(
+            `  ${t("Current context:", lang).padEnd(14)}~${formatTokenCount(breakdown.total)}`,
+        )
+        lines.push(`  ${t("Without DCP:", lang).padEnd(14)}~${formatTokenCount(withoutPruning)}`)
     } else {
-        lines.push(`  Current context: ~${formatTokenCount(breakdown.total)}`)
+        lines.push(
+            `  ${t("Current context:", lang).padEnd(14)}~${formatTokenCount(breakdown.total)}`,
+        )
     }
 
     lines.push("")
@@ -294,11 +302,12 @@ export function formatContextMessage(breakdown: TokenBreakdown): string {
 }
 
 export async function handleContextCommand(ctx: ContextCommandContext): Promise<void> {
-    const { client, state, logger, sessionId, messages } = ctx
+    const { client, state, logger, sessionId, messages, config } = ctx
+    const lang = config.compress.lang
 
     const breakdown = analyzeContextTokens(state, messages)
 
-    const message = formatContextMessage(breakdown)
+    const message = formatContextMessage(breakdown, lang)
 
     const params = getCurrentParams(state, messages, logger)
     await sendIgnoredMessage(client, sessionId, message, params, logger)

@@ -338,6 +338,7 @@ export function resetOnCompaction(state: SessionState): void {
         nextRef: 1,
     }
     state.purgeMode = false
+    state.ignoredCommandSession = null
     state.nudges = {
         contextLimitAnchors: new Set<string>(),
         turnNudgeAnchors: new Set<string>(),

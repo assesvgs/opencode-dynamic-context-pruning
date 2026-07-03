@@ -37,6 +37,7 @@ const zh: Record<string, string> = {
     "Tools pruned": "已裁剪工具数",
     "Sessions with DCP history": "有 DCP 历史的会话",
     "Open DCP panel": "打开 DCP 面板",
+    Help: "帮助",
     DCP: "DCP",
     "DCP Error": "DCP 错误",
     "DCP Commands": "DCP 命令",
@@ -57,6 +58,16 @@ const zh: Record<string, string> = {
     "Protected tools": "保护工具",
     "Available commands": "可用命令",
     "Messages pruned": "已裁剪消息数",
+    "Messages pruned:": "已裁剪消息数：",
+    "Tools:": "工具数：",
+    "Messages:": "消息数：",
+    "Show this help in a modal": "在面板中显示此帮助",
+    "Open the command palette for DCP modal commands.": "打开命令面板查看 DCP 面板命令。",
+    "Use /dcp-compress [focus] when you want DCP to ask the model to run compression.":
+        "使用 /dcp-compress [焦点] 让 DCP 请求模型执行压缩。",
+    "Manual mode is now ON. Use /dcp-compress to trigger context tools manually.":
+        "手动模式已开启。使用 /dcp-compress 手动触发压缩。",
+    "Manual mode is now OFF.": "手动模式已关闭。",
     Views: "视图",
     Savings: "节省",
     "Compression is denied by permissions.": "压缩权限已被拒绝。",
@@ -66,6 +77,39 @@ const zh: Record<string, string> = {
     Assistant: "助手",
     Tools: "工具",
     Prompt: "提示",
+    "DCP Context Analysis": "DCP 上下文分析",
+    "Session Context Breakdown:": "会话上下文详情：",
+    "Summary:": "概要：",
+    "Pruned:": "已裁剪：",
+    "Current context:": "当前上下文：",
+    "Without DCP:": "未压缩时：",
+    "{n} tools": "{n} 个工具",
+    "{n} messages": "{n} 条消息",
+    "DCP Statistics": "DCP 统计",
+    "Compression:": "压缩：",
+    "All-time:": "总计：",
+    "Tokens in|out:": "输入|输出 Token：",
+    "Ratio:": "压缩率：",
+    "Time:": "耗时：",
+    "DCP Sweep": "DCP 清理",
+    "Nothing swept: no user message found.": "未清理：没有找到用户消息。",
+    "No tools found since the previous user message.": "上次用户消息后没有找到工具调用。",
+    "No tools found to sweep.": "没有找到需要清理的工具。",
+    "({n} protected tool(s) skipped)": "（{n} 个受保护工具已跳过）",
+    "Swept {n} tool(s) since the previous user message.": "已清理上次用户消息后的 {n} 个工具。",
+    "Swept the last {n} tool(s).": "已清理最近 {n} 个工具。",
+    "Tokens saved:": "节省 Token：",
+    "Tools pruned:": "已裁剪工具数：",
+    "Sessions:": "会话数：",
+    "DCP Decompress": "DCP 解压",
+    "Restored {n} message(s) (~{tokens})": "已恢复 {n} 条消息（~{tokens}）",
+    "No compression blocks found.": "没有找到压缩块。",
+    "Available blocks:": "可用块：",
+    "Block #{id}: {topic} ({tokens})": "块 #{id}：{topic}（{tokens}）",
+    "DCP Recompress": "DCP 重新压缩",
+    "Re-compressed {n} message(s) (~{tokens})": "已重新压缩 {n} 条消息（~{tokens}）",
+    "No compression available.": "没有需要重新压缩的块。",
+    "Recompress blocks:": "可重新压缩的块：",
 }
 
 const en: Record<string, string> = {}
@@ -74,4 +118,8 @@ const maps: Record<Lang, Record<string, string>> = { zh, en }
 
 export function t(key: string, lang: Lang): string {
     return maps[lang]?.[key] ?? key
+}
+
+export function tn(template: string, lang: Lang, n: number): string {
+    return t(template, lang).replace("{n}", String(n))
 }

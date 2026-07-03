@@ -23,6 +23,7 @@ import {
     isToolNameProtected,
 } from "../protected-patterns"
 import { syncToolCache } from "../state/tool-cache"
+import { t, tn, type Lang } from "../i18n"
 
 export interface SweepCommandContext {
     client: any
@@ -71,14 +72,14 @@ function collectToolIdsAfterIndex(
     return toolIds
 }
 
-function formatNoUserMessage(): string {
+function formatNoUserMessage(lang: Lang): string {
     const lines: string[] = []
 
     lines.push("╭───────────────────────────────────────────────────────────╮")
-    lines.push("│                      DCP Sweep                            │")
+    lines.push(`│  ${t("DCP Sweep", lang).padEnd(59)}│`)
     lines.push("╰───────────────────────────────────────────────────────────╯")
     lines.push("")
-    lines.push("Nothing swept: no user message found.")
+    lines.push(t("Nothing swept: no user message found.", lang))
 
     return lines.join("\n")
 }
@@ -89,34 +90,35 @@ function formatSweepMessage(
     mode: "since-user" | "last-n",
     toolIds: string[],
     toolMetadata: Map<string, ToolParameterEntry>,
+    lang: Lang,
     workingDirectory?: string,
     skippedProtected?: number,
 ): string {
     const lines: string[] = []
 
     lines.push("╭───────────────────────────────────────────────────────────╮")
-    lines.push("│                      DCP Sweep                            │")
+    lines.push(`│  ${t("DCP Sweep", lang).padEnd(59)}│`)
     lines.push("╰───────────────────────────────────────────────────────────╯")
     lines.push("")
 
     if (toolCount === 0) {
         if (mode === "since-user") {
-            lines.push("No tools found since the previous user message.")
+            lines.push(t("No tools found since the previous user message.", lang))
         } else {
-            lines.push(`No tools found to sweep.`)
+            lines.push(t("No tools found to sweep.", lang))
         }
         if (skippedProtected && skippedProtected > 0) {
-            lines.push(`(${skippedProtected} protected tool(s) skipped)`)
+            lines.push(tn("({n} protected tool(s) skipped)", lang, skippedProtected))
         }
     } else {
         if (mode === "since-user") {
-            lines.push(`Swept ${toolCount} tool(s) since the previous user message.`)
+            lines.push(tn("Swept {n} tool(s) since the previous user message.", lang, toolCount))
         } else {
-            lines.push(`Swept the last ${toolCount} tool(s).`)
+            lines.push(tn("Swept the last {n} tool(s).", lang, toolCount))
         }
-        lines.push(`Tokens saved: ~${tokensSaved.toLocaleString()}`)
+        lines.push(`${t("Tokens saved:", lang).padEnd(19)}~${tokensSaved.toLocaleString()}`)
         if (skippedProtected && skippedProtected > 0) {
-            lines.push(`(${skippedProtected} protected tool(s) skipped)`)
+            lines.push(tn("({n} protected tool(s) skipped)", lang, skippedProtected))
         }
         lines.push("")
         const itemLines = formatPrunedItemsList(toolIds, toolMetadata, workingDirectory)
@@ -155,7 +157,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
 
         if (lastUserMsgIndex === -1) {
             // No user message found - show message and return
-            const message = formatNoUserMessage()
+            const message = formatNoUserMessage(config.compress.lang)
             await sendIgnoredMessage(client, sessionId, message, params, logger)
             logger.info("Sweep command: no user message found")
             return
@@ -211,6 +213,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
             mode,
             [],
             new Map(),
+            config.compress.lang,
             workingDirectory,
             skippedProtected,
         )
@@ -250,6 +253,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
         mode,
         newToolIds,
         toolMetadata,
+        config.compress.lang,
         workingDirectory,
         skippedProtected,
     )
