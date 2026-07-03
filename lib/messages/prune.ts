@@ -18,6 +18,7 @@ export const prune = (
     messages: WithParts[],
 ): void => {
     filterCompressedRanges(state, logger, config, messages)
+    applyPendingReplacements(state, logger, messages)
     // pruneFullTool(state, logger, messages)
     pruneToolOutputs(state, logger, messages)
     pruneToolInputs(state, logger, messages)
@@ -189,12 +190,6 @@ const filterCompressedRanges = (
                     anchorMessageId: msgId,
                     blockId: (summary as { blockId?: unknown }).blockId,
                 })
-            } else if (rawSummaryContent.trim() === "[purged]") {
-                // Purge mode: silently drop this content, no summary injected
-                logger.info("Purged content at anchor", {
-                    anchorMessageId: msgId,
-                    blockId: (summary as { blockId?: unknown }).blockId,
-                })
             } else {
                 // Find user message for variant and as base for synthetic message
                 const msgIndex = messages.indexOf(msg)
@@ -236,4 +231,57 @@ const filterCompressedRanges = (
     // Replace messages array contents
     messages.length = 0
     messages.push(...result)
+}
+
+const applyPendingReplacements = (
+    state: SessionState,
+    logger: Logger,
+    messages: WithParts[],
+): void => {
+    const plans = state.prune.pendingReplacements
+    if (!plans || plans.length === 0) return
+
+    const skipIds = new Set<string>()
+    for (const plan of plans) {
+        let inRange = false
+        for (const msg of messages) {
+            if (msg.info.id === plan.startMessageId) inRange = true
+            if (inRange) skipIds.add(msg.info.id)
+            if (msg.info.id === plan.endMessageId) break
+        }
+    }
+    for (const plan of plans) {
+        skipIds.delete(plan.startMessageId)
+    }
+
+    const result: WithParts[] = []
+    for (const msg of messages) {
+        const msgId = msg.info.id
+        const plan = plans.find(p => p.startMessageId === msgId)
+
+        if (plan) {
+            for (const blockId of plan.consumedBlockIds) {
+                const block = state.prune.messages.blocksById.get(blockId)
+                if (block && block.active) {
+                    block.active = false
+                    block.deactivatedAt = Date.now()
+                    state.prune.messages.activeBlockIds.delete(blockId)
+                }
+            }
+
+            const msgIndex = messages.indexOf(msg)
+            const userMessage = getLastUserMessage(messages, msgIndex)
+            if (userMessage) {
+                result.push(createSyntheticUserMessage(userMessage, plan.replacementText))
+            }
+            continue
+        }
+
+        if (skipIds.has(msgId)) continue
+        result.push(msg)
+    }
+
+    messages.length = 0
+    messages.push(...result)
+    state.prune.pendingReplacements = []
 }

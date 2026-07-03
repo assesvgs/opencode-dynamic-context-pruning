@@ -10,6 +10,7 @@ import {
     isIgnoredUserMessage,
     isProtectedUserMessage,
     messageHasCompress,
+    messageHasPurge,
 } from "../query"
 import { saveSessionState } from "../../state/persistence"
 import {
@@ -29,6 +30,48 @@ import {
     getModelInfo,
     isContextOverLimits,
 } from "./utils"
+
+export const injectPurgeNudges = (
+    state: SessionState,
+    config: PluginConfig,
+    logger: Logger,
+    messages: WithParts[],
+    prompts: RuntimePrompts,
+): void => {
+    if (!config.purge.autonomous) return
+
+    const lastAssistantMessage = messages.findLast((m) => m.info.role === "assistant")
+    if (!lastAssistantMessage) return
+
+    if (messageHasPurge(lastAssistantMessage)) {
+        state.nudges.purgeNudgeAnchors.clear()
+        void saveSessionState(state, logger)
+        return
+    }
+
+    const { providerId, modelId } = getModelInfo(messages)
+    const { overMaxLimit } = isContextOverLimits(config, state, providerId, modelId, messages)
+    if (!overMaxLimit) return
+
+    const interval = Math.max(1, Math.floor(config.purge.nudgeFrequency || 1))
+    const lastMessage = findLastNonIgnoredMessage(messages)
+    if (!lastMessage) return
+
+    const added = addAnchor(
+        state.nudges.purgeNudgeAnchors,
+        lastMessage.message.info.id,
+        lastMessage.index,
+        messages,
+        interval,
+    )
+    if (!added) return
+
+    const nudgeText = prompts.purgeNudge
+    if (!nudgeText.trim()) return
+
+    appendToLastTextPart(lastAssistantMessage, nudgeText)
+    void saveSessionState(state, logger)
+}
 
 export const injectCompressNudges = (
     state: SessionState,

@@ -5,7 +5,7 @@ import { assignMessageRefs } from "../message-ids"
 import { isIgnoredUserMessage } from "../messages/query"
 import { deduplicate, purgeErrors } from "../strategies"
 import { getCurrentParams, getCurrentTokenUsage } from "../token-utils"
-import { sendCompressNotification } from "../ui/notification"
+import { sendCompressNotification, sendPurgeNotification } from "../ui/notification"
 import type { ToolContext } from "./types"
 import { buildSearchContext, fetchSessionMessages } from "./search"
 import type { SearchContext } from "./types"
@@ -86,7 +86,6 @@ export async function finalizeSession(
     batchTopic: string | undefined,
 ): Promise<void> {
     ctx.state.manualMode = ctx.state.manualMode ? "active" : false
-    ctx.state.purgeMode = false
     applyPendingCompressionDurations(ctx.state)
     await saveSessionState(ctx.state, ctx.logger)
 
@@ -95,15 +94,29 @@ export async function finalizeSession(
         .filter((msg) => !isIgnoredUserMessage(msg))
         .map((msg) => msg.info.id)
 
-    await sendCompressNotification(
-        ctx.client,
-        ctx.logger,
-        ctx.config,
-        ctx.state,
-        toolCtx.sessionID,
-        entries,
-        batchTopic,
-        sessionMessageIds,
-        params,
-    )
+    const pendingCount = ctx.state.prune.pendingReplacements?.length ?? 0
+    if (pendingCount > 0) {
+        await sendPurgeNotification(
+            ctx.client,
+            ctx.logger,
+            ctx.config,
+            ctx.state,
+            toolCtx.sessionID,
+            batchTopic,
+            pendingCount,
+            params,
+        )
+    } else {
+        await sendCompressNotification(
+            ctx.client,
+            ctx.logger,
+            ctx.config,
+            ctx.state,
+            toolCtx.sessionID,
+            entries,
+            batchTopic,
+            sessionMessageIds,
+            params,
+        )
+    }
 }

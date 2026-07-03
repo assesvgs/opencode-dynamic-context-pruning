@@ -27,8 +27,12 @@ export interface CompressConfig {
     protectedTools: string[]
     protectTags: boolean
     protectUserMessages: boolean
-    autonomousPurge: boolean
     lang: "en" | "zh"
+}
+
+export interface PurgeConfig {
+    autonomous: boolean       // 是否自动注入 purge nudge（提醒 AI 使用 purge）
+    nudgeFrequency: number   // purge nudge 频率
 }
 
 export interface Commands {
@@ -69,6 +73,7 @@ export interface PluginConfig {
     experimental: ExperimentalConfig
     protectedFilePatterns: string[]
     compress: CompressConfig
+    purge: PurgeConfig
     strategies: {
         deduplication: Deduplication
         purgeErrors: PurgeErrors
@@ -128,8 +133,10 @@ export const VALID_CONFIG_KEYS = new Set([
     "compress.protectedTools",
     "compress.protectTags",
     "compress.protectUserMessages",
-    "compress.autonomousPurge",
     "compress.lang",
+    "purge",
+    "purge.autonomous",
+    "purge.nudgeFrequency",
     "strategies",
     "strategies.deduplication",
     "strategies.deduplication.enabled",
@@ -448,17 +455,6 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
                 })
             }
 
-            if (
-                compress.autonomousPurge !== undefined &&
-                typeof compress.autonomousPurge !== "boolean"
-            ) {
-                errors.push({
-                    key: "compress.autonomousPurge",
-                    expected: "boolean",
-                    actual: typeof compress.autonomousPurge,
-                })
-            }
-
             if (compress.lang !== undefined && compress.lang !== "en" && compress.lang !== "zh") {
                 errors.push({
                     key: "compress.lang",
@@ -565,6 +561,39 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
                     key: "compress.showCompression",
                     expected: "boolean",
                     actual: typeof compress.showCompression,
+                })
+            }
+        }
+    }
+
+    const purge = config.purge
+    if (purge !== undefined) {
+        if (typeof purge !== "object" || purge === null || Array.isArray(purge)) {
+            errors.push({
+                key: "purge",
+                expected: "object",
+                actual: typeof purge,
+            })
+        } else {
+            if (purge.autonomous !== undefined && typeof purge.autonomous !== "boolean") {
+                errors.push({
+                    key: "purge.autonomous",
+                    expected: "boolean",
+                    actual: typeof purge.autonomous,
+                })
+            }
+            if (purge.nudgeFrequency !== undefined && typeof purge.nudgeFrequency !== "number") {
+                errors.push({
+                    key: "purge.nudgeFrequency",
+                    expected: "number",
+                    actual: typeof purge.nudgeFrequency,
+                })
+            }
+            if (typeof purge.nudgeFrequency === "number" && purge.nudgeFrequency < 1) {
+                errors.push({
+                    key: "purge.nudgeFrequency",
+                    expected: "positive number (>= 1)",
+                    actual: `${purge.nudgeFrequency} (will be clamped to 1)`,
                 })
             }
         }
@@ -724,8 +753,11 @@ const defaultConfig: PluginConfig = {
         protectedTools: [...COMPRESS_DEFAULT_PROTECTED_TOOLS],
         protectTags: false,
         protectUserMessages: false,
-        autonomousPurge: false,
         lang: "en",
+    },
+    purge: {
+        autonomous: false,
+        nudgeFrequency: 5,
     },
     strategies: {
         deduplication: {
@@ -874,7 +906,14 @@ function createDefaultConfig(): void {
         '        "protectedTools": [],               // 保护工具输出追加到摘要（内置已保护 task/skill/todowrite/todoread/compress/batch/plan_enter/plan_exit/write/edit）',
         '        "protectTags": false,               // 保留 <protect> 标签内容不被压缩',
         '        "protectUserMessages": false,       // 保留用户原始消息不被压缩',
-        '        "autonomousPurge": false,           // 允许 AI 自主调用 purge 做极限清理',
+        "    },",
+        "",
+        "    // ============================================================",
+        "    // Purge 配置",
+        "    // ============================================================",
+        '    "purge": {',
+        '        "autonomous": false,               // 启用后自动注入 purge nudge 提醒',
+        '        "nudgeFrequency": 5,               // purge nudge 频率',
         "    },",
         "",
         "    // ============================================================",
@@ -977,10 +1016,23 @@ function mergeCompress(
         iterationNudgeThreshold: override.iterationNudgeThreshold ?? base.iterationNudgeThreshold,
         nudgeForce: override.nudgeForce ?? base.nudgeForce,
         protectedTools: [...new Set([...base.protectedTools, ...(override.protectedTools ?? [])])],
-        autonomousPurge: override.autonomousPurge ?? base.autonomousPurge,
         lang: override.lang ?? base.lang,
         protectTags: override.protectTags ?? base.protectTags,
         protectUserMessages: override.protectUserMessages ?? base.protectUserMessages,
+    }
+}
+
+function mergePurge(
+    base: PluginConfig["purge"],
+    override?: Partial<PluginConfig["purge"]>,
+): PluginConfig["purge"] {
+    if (!override) {
+        return base
+    }
+
+    return {
+        autonomous: override.autonomous ?? base.autonomous,
+        nudgeFrequency: override.nudgeFrequency ?? base.nudgeFrequency,
     }
 }
 
@@ -1042,6 +1094,10 @@ function deepCloneConfig(config: PluginConfig): PluginConfig {
             modelMinLimits: { ...config.compress.modelMinLimits },
             protectedTools: [...config.compress.protectedTools],
         },
+        purge: {
+            autonomous: config.purge.autonomous,
+            nudgeFrequency: config.purge.nudgeFrequency,
+        },
         strategies: {
             deduplication: {
                 ...config.strategies.deduplication,
@@ -1073,6 +1129,7 @@ function mergeLayer(config: PluginConfig, data: Record<string, any>): PluginConf
             ...new Set([...config.protectedFilePatterns, ...(data.protectedFilePatterns ?? [])]),
         ],
         compress: mergeCompress(config.compress, data.compress as CompressOverride),
+        purge: mergePurge(config.purge, data.purge as Partial<PurgeConfig>),
         strategies: mergeStrategies(config.strategies, data.strategies as any),
     }
 }

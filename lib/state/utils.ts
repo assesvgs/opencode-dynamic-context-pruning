@@ -337,10 +337,10 @@ export function resetOnCompaction(state: SessionState): void {
         byRef: new Map<string, string>(),
         nextRef: 1,
     }
-    state.purgeMode = false
     state.nudges = {
         contextLimitAnchors: new Set<string>(),
         turnNudgeAnchors: new Set<string>(),
         iterationNudgeAnchors: new Set<string>(),
+        purgeNudgeAnchors: new Set<string>(),
     }
 }

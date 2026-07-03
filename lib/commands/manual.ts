@@ -114,7 +114,6 @@ export function applyPendingManualTrigger(
 
     if (!state.sessionId || pending.sessionId !== state.sessionId) {
         state.pendingManualTrigger = null
-        state.purgeMode = false
         return
     }
 
@@ -151,5 +150,4 @@ export function applyPendingManualTrigger(
     }
 
     state.pendingManualTrigger = null
-    state.purgeMode = false
 }

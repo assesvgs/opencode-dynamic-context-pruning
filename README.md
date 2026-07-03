@@ -31,10 +31,10 @@ git clone https://github.com/assesvgs/opencode-dynamic-context-pruning
 cd opencode-dynamic-context-pruning
 npm install
 
-# 方案 A：使用 esbuild 构建（推荐，最兼容）
+# 方案 A：使用 esbuild 构建
 node build-local.mjs
 
-# 方案 B：直接调用 tsup CLI（需 node 可执行）
+# 方案 B：直接调用 tsup CLI
 node node_modules/tsup/dist/cli-default.js
 ```
 
@@ -287,9 +287,15 @@ finalizeSession()
 
         // 保留用户原始消息不被压缩（大段粘贴的提示词将永远保留）
         "protectUserMessages": false,
-
-        // 允许 AI 自主调用 purge 工具进行极限清理
-        "autonomousPurge": false,
+    },
+    // ============================================================
+    // Purge 配置
+    // ============================================================
+    "purge": {
+        // 启用后自动注入 purge nudge 提醒
+        "autonomous": false,
+        // purge nudge 提醒频率
+        "nudgeFrequency": 5,
     },
 
     // ============================================================
@@ -326,23 +332,19 @@ finalizeSession()
     - `message`：逐条压缩独立消息，更精细
 - `[焦点]` 参数：追加到 prompt 尾部指引模型压缩方向
 
-### `/dcp-purge` — 极限清理
+### `/dcp-purge` — 替换清理
 
-**原理**：同 `/dcp-compress` 机制，但注入的 prompt 告知模型**无任何内容限制**。
+**原理**：选中一段已完成的任务对话，将其替换为一段自包含的总结卡片。不同于 `compress`（可恢复），purge 的替换是永久的。
 
-可清理内容（全部无豁免）：
+可替换内容：
+- 已完成的任务对话段（工具调用、助手回复、用户输入）
+- 旧 `compress` 生成的摘要块（bN）
+- 大段不再需要的工具输出
 
-- 工具调用输入（包括 `write`/`edit` 等敏感工具）
-- 工具调用输出（包括 `task` 子代理结果）
-- 用户消息（包括 `protectUserMessages` 开启时）
-- 助手回复、错误信息、文件内容
-- 之前 `compress` 生成的摘要块、`<protect>` 标签内容
-
-模型判定规则：
-
-- **完全没用** → `summary: [purged]` → DCP 直接删除，不注入摘要
-- **有一点用** → 一行极简摘要
-- **还在用** → 不选中该范围
+效果：
+- 选中的消息范围被替换为一段总结卡片（合成用户消息）
+- 卡片中可标注哪些工具输出已被删除，说明如何重新读取
+- 不创建压缩块，不阻塞后续 compress/decompress 操作
 
 ### `/dcp-sweep [n]` — 清理工具输出
 
@@ -427,6 +429,7 @@ finalizeSession()
 | `context-limit-nudge.md` | 上下文超限提醒   |
 | `turn-nudge.md`          | 轮次提醒         |
 | `iteration-nudge.md`     | 迭代提醒         |
+| `purge-nudge.md`         | Purge 提醒       |
 
 覆盖目录优先级：
 

@@ -25,12 +25,20 @@ export interface PersistedPruneMessagesState {
 export interface PersistedPrune {
     tools?: Record<string, number>
     messages?: PersistedPruneMessagesState
+    pendingReplacements?: Array<{
+        startMessageId: string
+        endMessageId: string
+        replacementText: string
+        compactToolCallIds: string[]
+        consumedBlockIds: number[]
+    }>
 }
 
 export interface PersistedNudges {
     contextLimitAnchors: string[]
     turnNudgeAnchors?: string[]
     iterationNudgeAnchors?: string[]
+    purgeNudgeAnchors?: string[]
 }
 
 export interface PersistedSessionState {
@@ -93,11 +101,21 @@ export async function saveSessionState(
             prune: {
                 tools: Object.fromEntries(sessionState.prune.tools),
                 messages: serializePruneMessagesState(sessionState.prune.messages),
+                pendingReplacements: sessionState.prune.pendingReplacements?.length
+                    ? sessionState.prune.pendingReplacements.map(p => ({
+                        startMessageId: p.startMessageId,
+                        endMessageId: p.endMessageId,
+                        replacementText: p.replacementText,
+                        compactToolCallIds: p.compactToolCallIds,
+                        consumedBlockIds: p.consumedBlockIds,
+                    }))
+                    : undefined,
             },
             nudges: {
                 contextLimitAnchors: Array.from(sessionState.nudges.contextLimitAnchors),
                 turnNudgeAnchors: Array.from(sessionState.nudges.turnNudgeAnchors),
                 iterationNudgeAnchors: Array.from(sessionState.nudges.iterationNudgeAnchors),
+                purgeNudgeAnchors: Array.from(sessionState.nudges.purgeNudgeAnchors),
             },
             stats: sessionState.stats,
             lastUpdated: new Date().toISOString(),
@@ -191,6 +209,22 @@ export async function loadSessionState(
         }
         state.nudges.iterationNudgeAnchors = dedupedIterationAnchors
 
+        const rawPurgeNudgeAnchors = Array.isArray(state.nudges.purgeNudgeAnchors)
+            ? state.nudges.purgeNudgeAnchors
+            : []
+        const validPurgeAnchors = rawPurgeNudgeAnchors.filter(
+            (entry): entry is string => typeof entry === "string",
+        )
+        const dedupedPurgeAnchors = [...new Set(validPurgeAnchors)]
+        if (validPurgeAnchors.length !== rawPurgeNudgeAnchors.length) {
+            logger.warn("Filtered out malformed purgeNudgeAnchors entries", {
+                sessionId: sessionId,
+                original: rawPurgeNudgeAnchors.length,
+                valid: validPurgeAnchors.length,
+            })
+        }
+        state.nudges.purgeNudgeAnchors = dedupedPurgeAnchors
+
         logger.info("Loaded session state from disk", {
             sessionId: sessionId,
         })
@@ -223,6 +257,7 @@ function emptyPersistedState(manualMode: boolean): PersistedSessionState {
             contextLimitAnchors: [],
             turnNudgeAnchors: [],
             iterationNudgeAnchors: [],
+            purgeNudgeAnchors: [],
         },
         stats: {
             pruneTokenCounter: 0,

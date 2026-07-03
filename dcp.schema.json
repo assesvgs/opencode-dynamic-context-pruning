@@ -247,11 +247,6 @@
                     "default": false,
                     "description": "When enabled, your messages are never lost during compression"
                 },
-                "autonomousPurge": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "When enabled, AI can autonomously decide to use the purge tool for aggressive cleanup"
-                },
                 "lang": {
                     "type": "string",
                     "enum": ["en", "zh"],
@@ -272,8 +267,29 @@
                 "protectedTools": [],
                 "protectTags": false,
                 "protectUserMessages": false,
-                "autonomousPurge": false,
                 "lang": "en"
+            }
+        },
+        "purge": {
+            "type": "object",
+            "description": "Configuration for purge nudge behavior",
+            "additionalProperties": false,
+            "properties": {
+                "autonomous": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When enabled, inject purge nudges to remind the AI to use the purge tool"
+                },
+                "nudgeFrequency": {
+                    "type": "number",
+                    "default": 5,
+                    "minimum": 1,
+                    "description": "How often to send purge nudges (every N requests)"
+                }
+            },
+            "default": {
+                "autonomous": false,
+                "nudgeFrequency": 5
             }
         },
         "strategies": {

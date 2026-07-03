@@ -68,17 +68,18 @@ export function createSessionState(): SessionState {
         sessionId: null,
         isSubAgent: false,
         manualMode: false,
-        purgeMode: false,
         compressPermission: undefined,
         pendingManualTrigger: null,
         prune: {
             tools: new Map<string, number>(),
             messages: createPruneMessagesState(),
+            pendingReplacements: [],
         },
         nudges: {
             contextLimitAnchors: new Set<string>(),
             turnNudgeAnchors: new Set<string>(),
             iterationNudgeAnchors: new Set<string>(),
+            purgeNudgeAnchors: new Set<string>(),
         },
         stats: {
             pruneTokenCounter: 0,
@@ -107,17 +108,18 @@ export function resetSessionState(state: SessionState): void {
     state.sessionId = null
     state.isSubAgent = false
     state.manualMode = false
-    state.purgeMode = false
     state.compressPermission = undefined
     state.pendingManualTrigger = null
     state.prune = {
         tools: new Map<string, number>(),
         messages: createPruneMessagesState(),
+        pendingReplacements: [],
     }
     state.nudges = {
         contextLimitAnchors: new Set<string>(),
         turnNudgeAnchors: new Set<string>(),
         iterationNudgeAnchors: new Set<string>(),
+        purgeNudgeAnchors: new Set<string>(),
     }
     state.stats = {
         pruneTokenCounter: 0,
@@ -175,6 +177,15 @@ export async function ensureSessionInitialized(
 
     state.prune.tools = loadPruneMap(persisted.prune.tools)
     state.prune.messages = loadPruneMessagesState(persisted.prune.messages)
+    state.prune.pendingReplacements = persisted.prune.pendingReplacements?.length
+        ? persisted.prune.pendingReplacements.map(p => ({
+            startMessageId: p.startMessageId,
+            endMessageId: p.endMessageId,
+            replacementText: p.replacementText,
+            compactToolCallIds: p.compactToolCallIds,
+            consumedBlockIds: p.consumedBlockIds,
+        }))
+        : []
     state.nudges.contextLimitAnchors = new Set<string>(persisted.nudges.contextLimitAnchors || [])
     state.nudges.turnNudgeAnchors = new Set<string>([
         ...state.nudges.turnNudgeAnchors,

@@ -6,6 +6,7 @@ import {
     buildPriorityMap,
     buildToolIdList,
     injectCompressNudges,
+    injectPurgeNudges,
     injectExtendedSubAgentResults,
     injectMessageIds,
     prune,
@@ -147,6 +148,7 @@ export function createChatMessageTransformHandler(
             prompts.getRuntimePrompts(),
             compressionPriorities,
         )
+        injectPurgeNudges(state, config, logger, output.messages, prompts.getRuntimePrompts())
         injectMessageIds(state, config, output.messages, compressionPriorities)
         applyPendingManualTrigger(state, output.messages, logger)
         stripStaleMetadata(output.messages)
@@ -256,7 +258,6 @@ export function createCommandExecuteHandler(
             if (subcommand === "purge") {
                 const prompt = await handlePurgeTriggerCommand(commandCtx)
                 state.manualMode = "compress-pending"
-                state.purgeMode = true
                 state.pendingManualTrigger = {
                     sessionId: input.sessionID,
                     prompt,

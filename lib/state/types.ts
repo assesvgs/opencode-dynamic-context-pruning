@@ -59,6 +59,14 @@ export interface CompressionBlock {
     summary: string
 }
 
+export interface ReplacementPlan {
+    startMessageId: string
+    endMessageId: string
+    replacementText: string
+    compactToolCallIds: string[]
+    consumedBlockIds: number[]
+}
+
 export interface PruneMessagesState {
     byMessageId: Map<string, PrunedMessageEntry>
     blocksById: Map<number, CompressionBlock>
@@ -71,6 +79,7 @@ export interface PruneMessagesState {
 export interface Prune {
     tools: Map<string, number>
     messages: PruneMessagesState
+    pendingReplacements: ReplacementPlan[]
 }
 
 export interface PendingManualTrigger {
@@ -88,13 +97,13 @@ export interface Nudges {
     contextLimitAnchors: Set<string>
     turnNudgeAnchors: Set<string>
     iterationNudgeAnchors: Set<string>
+    purgeNudgeAnchors: Set<string>
 }
 
 export interface SessionState {
     sessionId: string | null
     isSubAgent: boolean
     manualMode: false | "active" | "compress-pending"
-    purgeMode: boolean
     compressPermission: "ask" | "allow" | "deny" | undefined
     pendingManualTrigger: PendingManualTrigger | null
     prune: Prune

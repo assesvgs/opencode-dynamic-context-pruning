@@ -22,6 +22,16 @@ export interface CompressRangeToolArgs {
     content: CompressRangeEntry[]
 }
 
+export interface PurgeToolArgs {
+    topic: string
+    content: Array<{
+        startId: string
+        endId: string
+        replacement: string
+        compactTools?: string[]
+    }>
+}
+
 export interface CompressMessageEntry {
     messageId: string
     topic: string

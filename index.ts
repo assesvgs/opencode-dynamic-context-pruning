@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin"
 import { getConfig } from "./lib/config"
-import { createCompressMessageTool, createCompressRangeTool, createPurgeTool } from "./lib/compress"
+import { createCompressMessageTool, createCompressRangeTool, createSmartPurgeTool } from "./lib/compress"
 import { t } from "./lib/i18n"
 import {
     compressDisabledByOpencode,
@@ -29,7 +29,7 @@ const server: Plugin = (async (ctx) => {
 
     const logger = new Logger(config.debug)
     const state = createSessionState()
-    const prompts = new PromptStore(logger, ctx.directory, config.experimental.customPrompts)
+    const prompts = new PromptStore(logger, ctx.directory, config.experimental.customPrompts, config.compress.lang)
     const hostPermissions: HostPermissionSnapshot = {
         global: undefined,
         agents: {},
@@ -85,9 +85,7 @@ const server: Plugin = (async (ctx) => {
                     config.compress.mode === "message"
                         ? createCompressMessageTool(compressToolContext)
                         : createCompressRangeTool(compressToolContext),
-                ...(config.compress.autonomousPurge && {
-                    purge: createPurgeTool(compressToolContext),
-                }),
+                purge: createSmartPurgeTool(compressToolContext),
             }),
         },
         config: async (opencodeConfig) => {
@@ -110,7 +108,7 @@ const server: Plugin = (async (ctx) => {
                     ["dcp-context", t("Show token usage breakdown for current session", lang)],
                     ["dcp-stats", t("Show DCP pruning statistics", lang)],
                     ["dcp-manual", t("Toggle manual mode on/off", lang)],
-                    ["dcp-purge", t("Aggressive cleanup: delete or compress any content", lang)],
+                    ["dcp-purge", t("Replace completed conversation with summary card", lang)],
                     ["dcp-decompress", t("Restore selected compression", lang)],
                     ["dcp-recompress", t("Re-apply a user-decompressed compression", lang)],
                     ["dcp-help", t("Show DCP command help", lang)],
@@ -122,10 +120,7 @@ const server: Plugin = (async (ctx) => {
 
             const toolsToAdd: string[] = []
             if (config.compress.permission !== "deny" && !config.experimental.allowSubAgents) {
-                toolsToAdd.push("compress")
-                if (config.compress.autonomousPurge) {
-                    toolsToAdd.push("purge")
-                }
+                toolsToAdd.push("compress", "purge")
             }
 
             if (toolsToAdd.length > 0) {
@@ -141,7 +136,7 @@ const server: Plugin = (async (ctx) => {
                 opencodeConfig.permission = {
                     ...permission,
                     compress: config.compress.permission,
-                    ...(config.compress.autonomousPurge && { purge: config.compress.permission }),
+                    ...(config.purge.autonomous && { purge: config.compress.permission }),
                 } as typeof permission
             }
 

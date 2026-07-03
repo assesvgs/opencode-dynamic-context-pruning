@@ -5,9 +5,10 @@ import type { Logger } from "../logger"
 import { SYSTEM as SYSTEM_PROMPT } from "./system"
 import { COMPRESS_RANGE as COMPRESS_RANGE_PROMPT } from "./compress-range"
 import { COMPRESS_MESSAGE as COMPRESS_MESSAGE_PROMPT } from "./compress-message"
-import { CONTEXT_LIMIT_NUDGE } from "./context-limit-nudge"
-import { TURN_NUDGE } from "./turn-nudge"
-import { ITERATION_NUDGE } from "./iteration-nudge"
+import { CONTEXT_LIMIT_NUDGE, CONTEXT_LIMIT_NUDGE_ZH } from "./context-limit-nudge"
+import { TURN_NUDGE, TURN_NUDGE_ZH } from "./turn-nudge"
+import { ITERATION_NUDGE, ITERATION_NUDGE_ZH } from "./iteration-nudge"
+import { PURGE_NUDGE_EN, PURGE_NUDGE_ZH } from "./purge-nudge"
 import { MANUAL_MODE_SYSTEM_EXTENSION, SUBAGENT_SYSTEM_EXTENSION } from "./extensions/system"
 
 export type PromptKey =
@@ -17,6 +18,7 @@ export type PromptKey =
     | "context-limit-nudge"
     | "turn-nudge"
     | "iteration-nudge"
+    | "purge-nudge"
 
 type EditablePromptField =
     | "system"
@@ -25,6 +27,7 @@ type EditablePromptField =
     | "contextLimitNudge"
     | "turnNudge"
     | "iterationNudge"
+    | "purgeNudge"
 
 interface PromptDefinition {
     key: PromptKey
@@ -53,6 +56,7 @@ export interface RuntimePrompts {
     contextLimitNudge: string
     turnNudge: string
     iterationNudge: string
+    purgeNudge: string
     manualExtension: string
     subagentExtension: string
 }
@@ -106,6 +110,14 @@ const PROMPT_DEFINITIONS: PromptDefinition[] = [
         usage: "Injected when iteration threshold is crossed",
         runtimeField: "iterationNudge",
     },
+    {
+        key: "purge-nudge",
+        fileName: "purge-nudge.md",
+        label: "Purge Nudge",
+        description: "Nudge to use purge tool for permanent replacement of completed tasks",
+        usage: "Injected when context is over max limit and autonomousPurge is enabled",
+        runtimeField: "purgeNudge",
+    },
 ]
 
 export const PROMPT_KEYS: PromptKey[] = [
@@ -115,6 +127,7 @@ export const PROMPT_KEYS: PromptKey[] = [
     "context-limit-nudge",
     "turn-nudge",
     "iteration-nudge",
+    "purge-nudge",
 ]
 
 const HTML_COMMENT_REGEX = /<!--[\s\S]*?-->/g
@@ -130,6 +143,7 @@ const BUNDLED_EDITABLE_PROMPTS: Record<EditablePromptField, string> = {
     contextLimitNudge: CONTEXT_LIMIT_NUDGE,
     turnNudge: TURN_NUDGE,
     iterationNudge: ITERATION_NUDGE,
+    purgeNudge: PURGE_NUDGE_EN,
 }
 
 const INTERNAL_PROMPT_EXTENSIONS = {
@@ -137,14 +151,15 @@ const INTERNAL_PROMPT_EXTENSIONS = {
     subagentExtension: SUBAGENT_SYSTEM_EXTENSION,
 }
 
-function createBundledRuntimePrompts(): RuntimePrompts {
+function createBundledRuntimePrompts(lang = "en"): RuntimePrompts {
     return {
         system: BUNDLED_EDITABLE_PROMPTS.system,
         compressRange: BUNDLED_EDITABLE_PROMPTS.compressRange,
         compressMessage: BUNDLED_EDITABLE_PROMPTS.compressMessage,
-        contextLimitNudge: BUNDLED_EDITABLE_PROMPTS.contextLimitNudge,
-        turnNudge: BUNDLED_EDITABLE_PROMPTS.turnNudge,
-        iterationNudge: BUNDLED_EDITABLE_PROMPTS.iterationNudge,
+        contextLimitNudge: lang === "zh" ? CONTEXT_LIMIT_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.contextLimitNudge,
+        turnNudge: lang === "zh" ? TURN_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.turnNudge,
+        iterationNudge: lang === "zh" ? ITERATION_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.iterationNudge,
+        purgeNudge: lang === "zh" ? PURGE_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.purgeNudge,
         manualExtension: INTERNAL_PROMPT_EXTENSIONS.manualExtension,
         subagentExtension: INTERNAL_PROMPT_EXTENSIONS.subagentExtension,
     }
@@ -325,13 +340,15 @@ export class PromptStore {
     private readonly logger: Logger
     private readonly paths: PromptPaths
     private readonly customPromptsEnabled: boolean
+    private readonly lang: string
     private runtimePrompts: RuntimePrompts
 
-    constructor(logger: Logger, workingDirectory: string, customPromptsEnabled = false) {
+    constructor(logger: Logger, workingDirectory: string, customPromptsEnabled = false, lang = "en") {
         this.logger = logger
         this.paths = resolvePromptPaths(workingDirectory)
         this.customPromptsEnabled = customPromptsEnabled
-        this.runtimePrompts = createBundledRuntimePrompts()
+        this.lang = lang
+        this.runtimePrompts = createBundledRuntimePrompts(this.lang)
 
         if (this.customPromptsEnabled) {
             this.ensureDefaultFiles()
@@ -344,7 +361,7 @@ export class PromptStore {
     }
 
     reload(): void {
-        const nextPrompts = createBundledRuntimePrompts()
+        const nextPrompts = createBundledRuntimePrompts(this.lang)
 
         if (!this.customPromptsEnabled) {
             this.runtimePrompts = nextPrompts
