@@ -247,7 +247,6 @@ finalizeSession()
         // 在聊天中显示压缩内容的详细摘要
         "showCompression": false,
 
-
         // 上下文软上限（token 数或百分比如 "50%"）
         "maxContextLimit": 100000,
 
@@ -308,6 +307,27 @@ finalizeSession()
     },
 }
 ```
+
+---
+
+## 配置依赖
+
+| 配置项                                | 作用域                    | 影响对象                     |
+| ------------------------------------- | ------------------------- | ---------------------------- |
+| `lang`                                | 全局                      | compress / purge / TUI       |
+| `maxContextLimit` / `minContextLimit` | 全局                      | compress nudge / purge nudge |
+| `summaryBuffer`                       | 全局                      | compress / purge             |
+| `compress.permission`                 | compress + purge 工具注册 | compress nudge / purge tool  |
+| `purge.autonomous`                    | purge 独立                | purge nudge                  |
+| `purge.nudgeFrequency`                | purge 独立                | purge nudge                  |
+| `manualMode`                          | compress                  | compress nudge               |
+
+**说明：**
+
+- `lang`、`maxContextLimit`、`minContextLimit`、`summaryBuffer` 从 `compress` 下提升到配置根级，两者共享
+- `compress.permission` 控制 compress nudge 注入和 purge 工具注册（purge 尚未完全解耦）；`compress.permission = "deny"` 时 purge 工具不可用，但 purge nudge 仍可注入
+- `purge.autonomous` 和 `purge.nudgeFrequency` 完全独立于 compress
+- `manualMode` 只阻塞 compress nudge，不阻塞 purge nudge
 
 ---
 
