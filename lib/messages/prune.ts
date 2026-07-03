@@ -1,4 +1,4 @@
-import type { SessionState, WithParts } from "../state"
+import type { SessionState, WithParts, CompressionBlock } from "../state"
 import type { Logger } from "../logger"
 import type { PluginConfig } from "../config"
 import { isMessageCompacted } from "../state/utils"
@@ -279,6 +279,67 @@ const applyPendingReplacements = (
 
         if (skipIds.has(msgId)) continue
         result.push(msg)
+    }
+
+    // Register blocks for persistence across turns
+    for (const plan of plans) {
+        const blockId = state.prune.messages.nextBlockId++
+        const runId = state.prune.messages.nextRunId++
+
+        const rangeMessageIds: string[] = []
+        const rangeToolIds: string[] = []
+        let inRange = false
+        for (const msg of messages) {
+            if (msg.info.id === plan.startMessageId) inRange = true
+            if (inRange) rangeMessageIds.push(msg.info.id)
+            for (const part of msg.parts || []) {
+                if (part.type === "tool" && part.callID) {
+                    rangeToolIds.push(part.callID)
+                }
+            }
+            if (msg.info.id === plan.endMessageId) break
+        }
+
+        state.prune.messages.blocksById.set(blockId, {
+            blockId,
+            runId,
+            active: true,
+            deactivatedByUser: false,
+            compressedTokens: 0,
+            summaryTokens: plan.replacementText.length >> 2,
+            durationMs: 0,
+            mode: "range",
+            topic: "purge",
+            batchTopic: undefined,
+            startId: plan.startMessageId,
+            endId: plan.endMessageId,
+            anchorMessageId: plan.startMessageId,
+            compressMessageId: "",
+            compressCallId: undefined,
+            includedBlockIds: plan.consumedBlockIds ?? [],
+            consumedBlockIds: plan.consumedBlockIds ?? [],
+            parentBlockIds: [],
+            directMessageIds: rangeMessageIds,
+            directToolIds: rangeToolIds,
+            effectiveMessageIds: rangeMessageIds,
+            effectiveToolIds: rangeToolIds,
+            createdAt: Date.now(),
+            summary: plan.replacementText,
+        })
+        state.prune.messages.activeBlockIds.add(blockId)
+        state.prune.messages.activeByAnchorMessageId.set(plan.startMessageId, blockId)
+
+        for (const msgId of rangeMessageIds) {
+            if (msgId === plan.startMessageId) continue
+            const entry = state.prune.messages.byMessageId.get(msgId) ?? {
+                tokenCount: 0,
+                allBlockIds: [],
+                activeBlockIds: [],
+            }
+            entry.allBlockIds.push(blockId)
+            entry.activeBlockIds.push(blockId)
+            state.prune.messages.byMessageId.set(msgId, entry)
+        }
     }
 
     messages.length = 0
