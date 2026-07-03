@@ -102,13 +102,13 @@ export async function saveSessionState(
                 tools: Object.fromEntries(sessionState.prune.tools),
                 messages: serializePruneMessagesState(sessionState.prune.messages),
                 pendingReplacements: sessionState.prune.pendingReplacements?.length
-                    ? sessionState.prune.pendingReplacements.map(p => ({
-                        startMessageId: p.startMessageId,
-                        endMessageId: p.endMessageId,
-                        replacementText: p.replacementText,
-                        compactToolCallIds: p.compactToolCallIds,
-                        consumedBlockIds: p.consumedBlockIds,
-                    }))
+                    ? sessionState.prune.pendingReplacements.map((p) => ({
+                          startMessageId: p.startMessageId,
+                          endMessageId: p.endMessageId,
+                          replacementText: p.replacementText,
+                          compactToolCallIds: p.compactToolCallIds,
+                          consumedBlockIds: p.consumedBlockIds,
+                      }))
                     : undefined,
             },
             nudges: {

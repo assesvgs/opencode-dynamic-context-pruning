@@ -31,8 +31,8 @@ export interface CompressConfig {
 }
 
 export interface PurgeConfig {
-    autonomous: boolean       // 是否自动注入 purge nudge（提醒 AI 使用 purge）
-    nudgeFrequency: number   // purge nudge 频率
+    autonomous: boolean // 是否自动注入 purge nudge（提醒 AI 使用 purge）
+    nudgeFrequency: number // purge nudge 频率
 }
 
 export interface Commands {

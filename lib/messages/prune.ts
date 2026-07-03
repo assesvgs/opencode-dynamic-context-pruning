@@ -257,7 +257,7 @@ const applyPendingReplacements = (
     const result: WithParts[] = []
     for (const msg of messages) {
         const msgId = msg.info.id
-        const plan = plans.find(p => p.startMessageId === msgId)
+        const plan = plans.find((p) => p.startMessageId === msgId)
 
         if (plan) {
             for (const blockId of plan.consumedBlockIds) {

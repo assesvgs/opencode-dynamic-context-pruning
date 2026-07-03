@@ -178,13 +178,13 @@ export async function ensureSessionInitialized(
     state.prune.tools = loadPruneMap(persisted.prune.tools)
     state.prune.messages = loadPruneMessagesState(persisted.prune.messages)
     state.prune.pendingReplacements = persisted.prune.pendingReplacements?.length
-        ? persisted.prune.pendingReplacements.map(p => ({
-            startMessageId: p.startMessageId,
-            endMessageId: p.endMessageId,
-            replacementText: p.replacementText,
-            compactToolCallIds: p.compactToolCallIds,
-            consumedBlockIds: p.consumedBlockIds,
-        }))
+        ? persisted.prune.pendingReplacements.map((p) => ({
+              startMessageId: p.startMessageId,
+              endMessageId: p.endMessageId,
+              replacementText: p.replacementText,
+              compactToolCallIds: p.compactToolCallIds,
+              consumedBlockIds: p.consumedBlockIds,
+          }))
         : []
     state.nudges.contextLimitAnchors = new Set<string>(persisted.nudges.contextLimitAnchors || [])
     state.nudges.turnNudgeAnchors = new Set<string>([

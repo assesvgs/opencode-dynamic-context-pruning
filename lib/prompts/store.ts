@@ -156,9 +156,11 @@ function createBundledRuntimePrompts(lang = "en"): RuntimePrompts {
         system: BUNDLED_EDITABLE_PROMPTS.system,
         compressRange: BUNDLED_EDITABLE_PROMPTS.compressRange,
         compressMessage: BUNDLED_EDITABLE_PROMPTS.compressMessage,
-        contextLimitNudge: lang === "zh" ? CONTEXT_LIMIT_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.contextLimitNudge,
+        contextLimitNudge:
+            lang === "zh" ? CONTEXT_LIMIT_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.contextLimitNudge,
         turnNudge: lang === "zh" ? TURN_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.turnNudge,
-        iterationNudge: lang === "zh" ? ITERATION_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.iterationNudge,
+        iterationNudge:
+            lang === "zh" ? ITERATION_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.iterationNudge,
         purgeNudge: lang === "zh" ? PURGE_NUDGE_ZH : BUNDLED_EDITABLE_PROMPTS.purgeNudge,
         manualExtension: INTERNAL_PROMPT_EXTENSIONS.manualExtension,
         subagentExtension: INTERNAL_PROMPT_EXTENSIONS.subagentExtension,
@@ -343,7 +345,12 @@ export class PromptStore {
     private readonly lang: string
     private runtimePrompts: RuntimePrompts
 
-    constructor(logger: Logger, workingDirectory: string, customPromptsEnabled = false, lang = "en") {
+    constructor(
+        logger: Logger,
+        workingDirectory: string,
+        customPromptsEnabled = false,
+        lang = "en",
+    ) {
         this.logger = logger
         this.paths = resolvePromptPaths(workingDirectory)
         this.customPromptsEnabled = customPromptsEnabled

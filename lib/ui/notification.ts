@@ -380,8 +380,8 @@ export async function sendPurgeNotification(
 
     const lang = config.compress.lang as Lang
     const message =
-        `▣ DCP | ${t("Purge", lang)} ${topic ? `— ${topic}` : ""}`
-        + `\n${t("→ Items:", lang)} ${tn("{n} ranges purged", lang, planCount)}`
+        `▣ DCP | ${t("Purge", lang)} ${topic ? `— ${topic}` : ""}` +
+        `\n${t("→ Items:", lang)} ${tn("{n} ranges purged", lang, planCount)}`
 
     if (config.pruneNotificationType === "toast") {
         await client.tui.showToast({

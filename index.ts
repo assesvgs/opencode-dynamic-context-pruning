@@ -1,6 +1,10 @@
 import type { Plugin } from "@opencode-ai/plugin"
 import { getConfig } from "./lib/config"
-import { createCompressMessageTool, createCompressRangeTool, createSmartPurgeTool } from "./lib/compress"
+import {
+    createCompressMessageTool,
+    createCompressRangeTool,
+    createSmartPurgeTool,
+} from "./lib/compress"
 import { t } from "./lib/i18n"
 import {
     compressDisabledByOpencode,
@@ -29,7 +33,12 @@ const server: Plugin = (async (ctx) => {
 
     const logger = new Logger(config.debug)
     const state = createSessionState()
-    const prompts = new PromptStore(logger, ctx.directory, config.experimental.customPrompts, config.compress.lang)
+    const prompts = new PromptStore(
+        logger,
+        ctx.directory,
+        config.experimental.customPrompts,
+        config.compress.lang,
+    )
     const hostPermissions: HostPermissionSnapshot = {
         global: undefined,
         agents: {},
