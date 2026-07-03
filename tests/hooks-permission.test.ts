@@ -53,6 +53,10 @@ function buildConfig(permission: "allow" | "ask" | "deny" = "allow"): PluginConf
             protectedTools: ["task"],
             protectTags: false,
             protectUserMessages: false,
+        purge: {
+            autonomous: false,
+            nudgeFrequency: 5,
+        },
         },
         strategies: {
             deduplication: {

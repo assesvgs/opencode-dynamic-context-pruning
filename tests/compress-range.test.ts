@@ -52,6 +52,10 @@ function buildConfig(): PluginConfig {
             protectedTools: [],
             protectTags: false,
             protectUserMessages: false,
+        purge: {
+            autonomous: false,
+            nudgeFrequency: 5,
+        },
         },
         strategies: {
             deduplication: {
