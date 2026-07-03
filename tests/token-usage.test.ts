@@ -296,7 +296,7 @@ test("isContextOverLimits does not extend the max threshold when summaryBuffer i
 
     const freshReportedTotal = 2400 + 600 + 150 + 300
     const config = buildConfig(freshReportedTotal - 1, 1)
-    config.compress.summaryBuffer = false
+    config.summaryBuffer = false
 
     const overLimit = isContextOverLimits(config, state, undefined, undefined, messages)
 
