@@ -43,7 +43,7 @@ export async function prepareSession(
 
     if (ctx.state.manualMode && ctx.state.manualMode !== "compress-pending") {
         throw new Error(
-            "Manual mode: compress blocked. Do not retry until `<compress triggered manually>` appears in user context.",
+            "Manual mode: compress/purge blocked. Do not retry until `<compress triggered manually>` appears in user context.",
         )
     }
 

@@ -94,6 +94,8 @@ const server: Plugin = (async (ctx) => {
                     config.compress.mode === "message"
                         ? createCompressMessageTool(compressToolContext)
                         : createCompressRangeTool(compressToolContext),
+            }),
+            ...(config.commands.enabled && {
                 purge: createSmartPurgeTool(compressToolContext),
             }),
         },
@@ -105,7 +107,7 @@ const server: Plugin = (async (ctx) => {
                 config.compress.permission = "deny"
             }
 
-            if (config.commands.enabled && config.compress.permission !== "deny") {
+            if (config.commands.enabled) {
                 const lang = config.compress.lang
                 opencodeConfig.command ??= {}
                 opencodeConfig.command["dcp-compress"] = {
@@ -129,7 +131,10 @@ const server: Plugin = (async (ctx) => {
 
             const toolsToAdd: string[] = []
             if (config.compress.permission !== "deny" && !config.experimental.allowSubAgents) {
-                toolsToAdd.push("compress", "purge")
+                toolsToAdd.push("compress")
+            }
+            if (config.commands.enabled && !config.experimental.allowSubAgents) {
+                toolsToAdd.push("purge")
             }
 
             if (toolsToAdd.length > 0) {
@@ -145,7 +150,7 @@ const server: Plugin = (async (ctx) => {
                 opencodeConfig.permission = {
                     ...permission,
                     compress: config.compress.permission,
-                    ...(config.purge.autonomous && { purge: config.compress.permission }),
+                    purge: "allow",
                 } as typeof permission
             }
 
