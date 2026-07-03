@@ -97,7 +97,7 @@ function formatCompressionTime(ms: number): string {
 
 export async function handleStatsCommand(ctx: StatsCommandContext): Promise<void> {
     const { client, state, config, logger, sessionId, messages } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
 
     const report = await buildStatsReport(state, logger)
     const message = formatStatsMessage(

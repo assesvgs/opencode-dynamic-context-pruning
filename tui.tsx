@@ -12,9 +12,9 @@ const tui: TuiPluginModule["tui"] = async (api) => {
 
     registerCommands(api, [
         {
-            title: t("DCP", config.compress.lang),
+            title: t("DCP", config.lang),
             name: "dcp.panel",
-            description: t("Open DCP panel", config.compress.lang),
+            description: t("Open DCP panel", config.lang),
             slashName: "dcp-panel",
             run: () => openPanelModal(api, config),
         },

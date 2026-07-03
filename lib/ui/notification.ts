@@ -116,7 +116,7 @@ export async function sendUnifiedNotification(
         return false
     }
 
-    const lang = config.compress.lang
+    const lang = config.lang
     const message =
         config.pruneNotification === "minimal"
             ? buildMinimalMessage(state, reason, lang)
@@ -208,7 +208,7 @@ export async function sendCompressNotification(
         return false
     }
 
-    const lang: Lang = config.compress.lang
+    const lang: Lang = config.lang
     let message: string
     const compressionLabel = getCompressionLabel(entries, lang)
     const summary = buildCompressionSummary(entries, state, lang)
@@ -378,7 +378,7 @@ export async function sendPurgeNotification(
 ): Promise<boolean> {
     if (config.pruneNotification === "off") return false
 
-    const lang = config.compress.lang as Lang
+    const lang = config.lang as Lang
     const message =
         `▣ DCP | ${t("Purge", lang)} ${topic ? `— ${topic}` : ""}` +
         `\n${t("→ Items:", lang)} ${tn("{n} ranges purged", lang, planCount)}`

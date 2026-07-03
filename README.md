@@ -233,10 +233,6 @@ finalizeSession()
     // 上下文压缩工具配置（核心）
     // ============================================================
     "compress": {
-        // 语言："en" = 英文 / "zh" = 中文
-        // 影响：命令输出文本、AI trigger prompt、TUI 面板、裁剪通知
-        "lang": "en",
-
         // 压缩模式：
         // "range"   — 将连续多轮对话压缩为摘要（稳定，推荐）
         // "message" — 实验性，单独压缩每条原始消息，更精细
@@ -251,10 +247,6 @@ finalizeSession()
         // 在聊天中显示压缩内容的详细摘要
         "showCompression": false,
 
-        // 摘要 token 是否计入 maxContextLimit：
-        // true  = 摘要 token 不计入限制，等效扩展上下文窗口
-        // false = 摘要 token 计入限制
-        "summaryBuffer": true,
 
         // 上下文软上限（token 数或百分比如 "50%"）
         "maxContextLimit": 100000,

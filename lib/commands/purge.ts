@@ -47,7 +47,7 @@ export interface PurgeCommandContext {
 
 export async function handlePurgeTriggerCommand(ctx: PurgeCommandContext): Promise<string> {
     const { state, config } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
 
     const compressedBlockGuidance =
         config.compress.mode === "message" ? "" : buildCompressedBlockGuidance(state)

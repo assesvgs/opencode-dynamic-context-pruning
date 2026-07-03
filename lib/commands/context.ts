@@ -303,7 +303,7 @@ export function formatContextMessage(breakdown: TokenBreakdown, lang: Lang): str
 
 export async function handleContextCommand(ctx: ContextCommandContext): Promise<void> {
     const { client, state, logger, sessionId, messages, config } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
 
     const breakdown = analyzeContextTokens(state, messages)
 

@@ -114,8 +114,7 @@ function resolveContextTokenLimit(
         return Math.round((clampedPercent / 100) * state.modelContextLimit)
     }
 
-    const modelLimits =
-        threshold === "max" ? config.compress.modelMaxLimits : config.compress.modelMinLimits
+    const modelLimits = threshold === "max" ? config.modelMaxLimits : config.modelMinLimits
     if (modelLimits && providerId !== undefined && modelId !== undefined) {
         const providerModelId = `${providerId}/${modelId}`
         const modelLimit = modelLimits[providerModelId]
@@ -124,8 +123,7 @@ function resolveContextTokenLimit(
         }
     }
 
-    const globalLimit =
-        threshold === "max" ? config.compress.maxContextLimit : config.compress.minContextLimit
+    const globalLimit = threshold === "max" ? config.maxContextLimit : config.minContextLimit
     return parseLimitValue(globalLimit)
 }
 
@@ -136,9 +134,7 @@ export function isContextOverLimits(
     modelId: string | undefined,
     messages: WithParts[],
 ) {
-    const summaryTokenExtension = config.compress.summaryBuffer
-        ? getActiveSummaryTokenUsage(state)
-        : 0
+    const summaryTokenExtension = config.summaryBuffer ? getActiveSummaryTokenUsage(state) : 0
     const resolvedMaxContextLimit = resolveContextTokenLimit(
         config,
         state,

@@ -44,7 +44,7 @@ function getTriggerPrompt(
     config: PluginConfig,
     userFocus?: string,
 ): string {
-    const lang = config.compress.lang
+    const lang = config.lang
     const base = lang === "zh" ? ZH_COMPRESS_TRIGGER_PROMPT : COMPRESS_TRIGGER_PROMPT
     const compressedBlockGuidance =
         config.compress.mode === "message" ? "" : buildCompressedBlockGuidance(state)
@@ -71,7 +71,7 @@ export async function handleManualToggleCommand(
     modeArg?: string,
 ): Promise<void> {
     const { client, state, logger, sessionId, messages, config } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
 
     if (modeArg === "on") {
         state.manualMode = "active"

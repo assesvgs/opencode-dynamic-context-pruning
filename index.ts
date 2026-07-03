@@ -37,7 +37,7 @@ const server: Plugin = (async (ctx) => {
         logger,
         ctx.directory,
         config.experimental.customPrompts,
-        config.compress.lang,
+        config.lang,
     )
     const hostPermissions: HostPermissionSnapshot = {
         global: undefined,
@@ -108,7 +108,7 @@ const server: Plugin = (async (ctx) => {
             }
 
             if (config.commands.enabled) {
-                const lang = config.compress.lang
+                const lang = config.lang
                 opencodeConfig.command ??= {}
                 opencodeConfig.command["dcp-compress"] = {
                     template: "",

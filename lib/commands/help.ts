@@ -95,7 +95,7 @@ export async function handleHelpCommand(ctx: HelpCommandContext): Promise<void> 
     const { client, state, logger, sessionId, messages } = ctx
 
     const { config } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
     const message = formatHelpMessage(state, config, lang)
 
     const params = getCurrentParams(state, messages, logger)

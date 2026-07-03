@@ -31,14 +31,14 @@ export function showError(api: TuiApi, title: string, error: unknown, lang?: Lan
 }
 
 export function openContextModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, t("Context", config.compress.lang), async () => {
+    runModal(api, t("Context", config.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
             showStatusDialog(
                 api,
-                t("Context", config.compress.lang),
-                t("No session", config.compress.lang),
-                t("Open a session first.", config.compress.lang),
+                t("Context", config.lang),
+                t("No session", config.lang),
+                t("Open a session first.", config.lang),
             )
             return
         }
@@ -48,21 +48,21 @@ export function openContextModal(api: TuiApi, config: PluginConfig) {
                 state={data.state}
                 messages={data.messages}
                 onBack={() => openPanelModal(api, config)}
-                lang={config.compress.lang}
+                lang={config.lang}
             />
         ))
     })
 }
 
 export function openStatsModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, t("Stats", config.compress.lang), async () => {
+    runModal(api, t("Stats", config.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
             showStatusDialog(
                 api,
-                t("Stats", config.compress.lang),
-                t("No session", config.compress.lang),
-                t("Open a session first.", config.compress.lang),
+                t("Stats", config.lang),
+                t("No session", config.lang),
+                t("Open a session first.", config.lang),
             )
             return
         }
@@ -72,21 +72,21 @@ export function openStatsModal(api: TuiApi, config: PluginConfig) {
                 api={api}
                 report={report}
                 onBack={() => openPanelModal(api, config)}
-                lang={config.compress.lang}
+                lang={config.lang}
             />
         ))
     })
 }
 
 export function openPanelModal(api: TuiApi, config: PluginConfig) {
-    runModal(api, t("DCP", config.compress.lang), async () => {
+    runModal(api, t("DCP", config.lang), async () => {
         const data = await loadSessionData(api, config)
         if (!data) {
             showStatusDialog(
                 api,
-                t("DCP", config.compress.lang),
-                t("No session", config.compress.lang),
-                t("Open a session first.", config.compress.lang),
+                t("DCP", config.lang),
+                t("No session", config.lang),
+                t("Open a session first.", config.lang),
             )
             return
         }
@@ -98,7 +98,7 @@ export function openPanelModal(api: TuiApi, config: PluginConfig) {
                 onContext={() => openContextModal(api, config)}
                 onStats={() => openStatsModal(api, config)}
                 onManual={(enabled) => setManualMode(api, config, data.state.sessionId, enabled)}
-                lang={config.compress.lang}
+                lang={config.lang}
             />
         ))
     })

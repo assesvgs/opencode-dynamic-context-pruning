@@ -16,18 +16,12 @@ export interface CompressConfig {
     mode: CompressMode
     permission: Permission
     showCompression: boolean
-    summaryBuffer: boolean
-    maxContextLimit: number | `${number}%`
-    minContextLimit: number | `${number}%`
-    modelMaxLimits?: Record<string, number | `${number}%`>
-    modelMinLimits?: Record<string, number | `${number}%`>
     nudgeFrequency: number
     iterationNudgeThreshold: number
     nudgeForce: "strong" | "soft"
     protectedTools: string[]
     protectTags: boolean
     protectUserMessages: boolean
-    lang: "en" | "zh"
 }
 
 export interface PurgeConfig {
@@ -65,6 +59,12 @@ export interface PluginConfig {
     enabled: boolean
     autoUpdate: boolean
     debug: boolean
+    lang: "en" | "zh"
+    summaryBuffer: boolean
+    maxContextLimit: number | `${number}%`
+    minContextLimit: number | `${number}%`
+    modelMaxLimits?: Record<string, number | `${number}%`>
+    modelMinLimits?: Record<string, number | `${number}%`>
     pruneNotification: "off" | "minimal" | "detailed"
     pruneNotificationType: "chat" | "toast"
     commands: Commands
@@ -122,18 +122,18 @@ export const VALID_CONFIG_KEYS = new Set([
     "compress.mode",
     "compress.permission",
     "compress.showCompression",
-    "compress.summaryBuffer",
-    "compress.maxContextLimit",
-    "compress.minContextLimit",
-    "compress.modelMaxLimits",
-    "compress.modelMinLimits",
     "compress.nudgeFrequency",
     "compress.iterationNudgeThreshold",
     "compress.nudgeForce",
     "compress.protectedTools",
     "compress.protectTags",
     "compress.protectUserMessages",
-    "compress.lang",
+    "lang",
+    "summaryBuffer",
+    "maxContextLimit",
+    "minContextLimit",
+    "modelMaxLimits",
+    "modelMinLimits",
     "purge",
     "purge.autonomous",
     "purge.nudgeFrequency",
@@ -154,7 +154,12 @@ function getConfigKeyPaths(obj: Record<string, any>, prefix = ""): string[] {
         keys.push(fullKey)
 
         // model*Limits are dynamic maps keyed by providerID/modelID; do not recurse into arbitrary IDs.
-        if (fullKey === "compress.modelMaxLimits" || fullKey === "compress.modelMinLimits") {
+        if (
+            fullKey === "compress.modelMaxLimits" ||
+            fullKey === "compress.modelMinLimits" ||
+            fullKey === "modelMaxLimits" ||
+            fullKey === "modelMinLimits"
+        ) {
             continue
         }
 
@@ -387,17 +392,6 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
             }
 
             if (
-                compress.summaryBuffer !== undefined &&
-                typeof compress.summaryBuffer !== "boolean"
-            ) {
-                errors.push({
-                    key: "compress.summaryBuffer",
-                    expected: "boolean",
-                    actual: typeof compress.summaryBuffer,
-                })
-            }
-
-            if (
                 compress.nudgeFrequency !== undefined &&
                 typeof compress.nudgeFrequency !== "number"
             ) {
@@ -452,14 +446,6 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
                     key: "compress.protectTags",
                     expected: "boolean",
                     actual: typeof compress.protectTags,
-                })
-            }
-
-            if (compress.lang !== undefined && compress.lang !== "en" && compress.lang !== "zh") {
-                errors.push({
-                    key: "compress.lang",
-                    expected: '"en" | "zh"',
-                    actual: JSON.stringify(compress.lang),
                 })
             }
 
@@ -533,17 +519,6 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
                 }
             }
 
-            if (compress.maxContextLimit !== undefined) {
-                validateLimitValue("compress.maxContextLimit", compress.maxContextLimit)
-            }
-
-            if (compress.minContextLimit !== undefined) {
-                validateLimitValue("compress.minContextLimit", compress.minContextLimit)
-            }
-
-            validateModelLimits("compress.modelMaxLimits", compress.modelMaxLimits)
-            validateModelLimits("compress.modelMinLimits", compress.modelMinLimits)
-
             const validValues = ["ask", "allow", "deny"]
             if (compress.permission !== undefined && !validValues.includes(compress.permission)) {
                 errors.push({
@@ -562,6 +537,94 @@ export function validateConfigTypes(config: Record<string, any>): ValidationErro
                     expected: "boolean",
                     actual: typeof compress.showCompression,
                 })
+            }
+        }
+    }
+
+    // Root-level validations
+    if (config.lang !== undefined && config.lang !== "en" && config.lang !== "zh") {
+        errors.push({
+            key: "lang",
+            expected: '"en" | "zh"',
+            actual: JSON.stringify(config.lang),
+        })
+    }
+    if (config.summaryBuffer !== undefined && typeof config.summaryBuffer !== "boolean") {
+        errors.push({
+            key: "summaryBuffer",
+            expected: "boolean",
+            actual: typeof config.summaryBuffer,
+        })
+    }
+    if (config.maxContextLimit !== undefined) {
+        const isNum = typeof config.maxContextLimit === "number"
+        const isPct =
+            typeof config.maxContextLimit === "string" && config.maxContextLimit.endsWith("%")
+        if (!isNum && !isPct) {
+            errors.push({
+                key: "maxContextLimit",
+                expected: 'number | "${number}%"',
+                actual: JSON.stringify(config.maxContextLimit),
+            })
+        }
+    }
+    if (config.minContextLimit !== undefined) {
+        const isNum = typeof config.minContextLimit === "number"
+        const isPct =
+            typeof config.minContextLimit === "string" && config.minContextLimit.endsWith("%")
+        if (!isNum && !isPct) {
+            errors.push({
+                key: "minContextLimit",
+                expected: 'number | "${number}%"',
+                actual: JSON.stringify(config.minContextLimit),
+            })
+        }
+    }
+    if (config.modelMaxLimits !== undefined) {
+        if (
+            typeof config.modelMaxLimits !== "object" ||
+            config.modelMaxLimits === null ||
+            Array.isArray(config.modelMaxLimits)
+        ) {
+            errors.push({
+                key: "modelMaxLimits",
+                expected: "Record<string, number | ${number}%>",
+                actual: typeof config.modelMaxLimits,
+            })
+        } else {
+            for (const [k, v] of Object.entries(config.modelMaxLimits)) {
+                const isNum = typeof v === "number"
+                const isPct = typeof v === "string" && /^\d+(?:\.\d+)?%$/.test(v)
+                if (!isNum && !isPct)
+                    errors.push({
+                        key: `modelMaxLimits.${k}`,
+                        expected: 'number | "${number}%"',
+                        actual: JSON.stringify(v),
+                    })
+            }
+        }
+    }
+    if (config.modelMinLimits !== undefined) {
+        if (
+            typeof config.modelMinLimits !== "object" ||
+            config.modelMinLimits === null ||
+            Array.isArray(config.modelMinLimits)
+        ) {
+            errors.push({
+                key: "modelMinLimits",
+                expected: "Record<string, number | ${number}%>",
+                actual: typeof config.modelMinLimits,
+            })
+        } else {
+            for (const [k, v] of Object.entries(config.modelMinLimits)) {
+                const isNum = typeof v === "number"
+                const isPct = typeof v === "string" && /^\d+(?:\.\d+)?%$/.test(v)
+                if (!isNum && !isPct)
+                    errors.push({
+                        key: `modelMinLimits.${k}`,
+                        expected: 'number | "${number}%"',
+                        actual: JSON.stringify(v),
+                    })
             }
         }
     }
@@ -721,6 +784,10 @@ const defaultConfig: PluginConfig = {
     enabled: true,
     autoUpdate: true,
     debug: false,
+    lang: "en",
+    summaryBuffer: true,
+    maxContextLimit: 100000,
+    minContextLimit: 50000,
     pruneNotification: "detailed",
     pruneNotificationType: "chat",
     commands: {
@@ -744,16 +811,12 @@ const defaultConfig: PluginConfig = {
         mode: "range",
         permission: "allow",
         showCompression: false,
-        summaryBuffer: true,
-        maxContextLimit: 100000,
-        minContextLimit: 50000,
         nudgeFrequency: 5,
         iterationNudgeThreshold: 15,
         nudgeForce: "soft",
         protectedTools: [...COMPRESS_DEFAULT_PROTECTED_TOOLS],
         protectTags: false,
         protectUserMessages: false,
-        lang: "en",
     },
     purge: {
         autonomous: false,
@@ -850,6 +913,10 @@ function createDefaultConfig(): void {
         '    "enabled": true,                        // 启用或禁用 DCP 插件',
         '    "autoUpdate": true,                     // 自动更新 npm 安装的 DCP',
         '    "debug": false,                         // 调试日志（输出到 ~/.config/opencode/logs/dcp/）',
+        '    "lang": "en",                            // 语言：en 英文 / zh 中文',
+        '    "summaryBuffer": true,                   // 摘要 token 不计入上下文限制',
+        '    "maxContextLimit": 100000,                // 上下文软上限（token 数或百分比"50%"）',
+        '    "minContextLimit": 50000,                 // 上下文软下限',
         '    "pruneNotification": "detailed",        // 通知显示：off 关闭 / minimal 简洁 / detailed 详细',
         '    "pruneNotificationType": "chat",        // 通知位置：chat 对话内 / toast 弹窗',
         "",
@@ -891,15 +958,9 @@ function createDefaultConfig(): void {
         "    // 上下文压缩工具配置（核心）",
         "    // ============================================================",
         '    "compress": {',
-        '        "lang": "en",                       // 语言：en 英文 / zh 中文',
         '        "mode": "range",                    // 压缩模式：range 连续范围 / message 逐条消息',
         '        "permission": "allow",              // 权限：allow 自由 / ask 询问 / deny 禁用',
         '        "showCompression": false,           // 在聊天中显示详细摘要',
-        '        "summaryBuffer": true,              // 摘要 token 不计入上下文限制',
-        '        "maxContextLimit": 100000,           // 上下文软上限（token 数或百分比"50%"）',
-        '        "minContextLimit": 50000,            // 上下文软下限',
-        '        "modelMaxLimits": {},               // 按模型覆盖上限，键名 "provider/model"',
-        '        "modelMinLimits": {},               // 按模型覆盖下限',
         '        "nudgeFrequency": 5,                // 压缩提醒频率（每 N 次请求）',
         '        "iterationNudgeThreshold": 15,      // 距上次用户消息 N 条后开始提醒',
         '        "nudgeForce": "soft",               // 提醒强度：soft 温和 / strong 积极',
@@ -1007,16 +1068,10 @@ function mergeCompress(
         mode: override.mode ?? base.mode,
         permission: override.permission ?? base.permission,
         showCompression: override.showCompression ?? base.showCompression,
-        summaryBuffer: override.summaryBuffer ?? base.summaryBuffer,
-        maxContextLimit: override.maxContextLimit ?? base.maxContextLimit,
-        minContextLimit: override.minContextLimit ?? base.minContextLimit,
-        modelMaxLimits: override.modelMaxLimits ?? base.modelMaxLimits,
-        modelMinLimits: override.modelMinLimits ?? base.modelMinLimits,
         nudgeFrequency: override.nudgeFrequency ?? base.nudgeFrequency,
         iterationNudgeThreshold: override.iterationNudgeThreshold ?? base.iterationNudgeThreshold,
         nudgeForce: override.nudgeForce ?? base.nudgeForce,
         protectedTools: [...new Set([...base.protectedTools, ...(override.protectedTools ?? [])])],
-        lang: override.lang ?? base.lang,
         protectTags: override.protectTags ?? base.protectTags,
         protectUserMessages: override.protectUserMessages ?? base.protectUserMessages,
     }
@@ -1077,6 +1132,12 @@ function mergeExperimental(
 function deepCloneConfig(config: PluginConfig): PluginConfig {
     return {
         ...config,
+        lang: config.lang,
+        summaryBuffer: config.summaryBuffer,
+        maxContextLimit: config.maxContextLimit,
+        minContextLimit: config.minContextLimit,
+        modelMaxLimits: config.modelMaxLimits ? { ...config.modelMaxLimits } : undefined,
+        modelMinLimits: config.modelMinLimits ? { ...config.modelMinLimits } : undefined,
         commands: {
             enabled: config.commands.enabled,
             protectedTools: [...config.commands.protectedTools],
@@ -1090,8 +1151,6 @@ function deepCloneConfig(config: PluginConfig): PluginConfig {
         protectedFilePatterns: [...config.protectedFilePatterns],
         compress: {
             ...config.compress,
-            modelMaxLimits: { ...config.compress.modelMaxLimits },
-            modelMinLimits: { ...config.compress.modelMinLimits },
             protectedTools: [...config.compress.protectedTools],
         },
         purge: {
@@ -1116,6 +1175,12 @@ function mergeLayer(config: PluginConfig, data: Record<string, any>): PluginConf
         enabled: data.enabled ?? config.enabled,
         autoUpdate: data.autoUpdate ?? config.autoUpdate,
         debug: data.debug ?? config.debug,
+        lang: data.lang ?? config.lang,
+        summaryBuffer: data.summaryBuffer ?? config.summaryBuffer,
+        maxContextLimit: data.maxContextLimit ?? config.maxContextLimit,
+        minContextLimit: data.minContextLimit ?? config.minContextLimit,
+        modelMaxLimits: data.modelMaxLimits ?? config.modelMaxLimits,
+        modelMinLimits: data.modelMinLimits ?? config.modelMinLimits,
         pruneNotification: data.pruneNotification ?? config.pruneNotification,
         pruneNotificationType: data.pruneNotificationType ?? config.pruneNotificationType,
         commands: mergeCommands(config.commands, data.commands as any),

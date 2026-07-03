@@ -157,7 +157,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
 
         if (lastUserMsgIndex === -1) {
             // No user message found - show message and return
-            const message = formatNoUserMessage(config.compress.lang)
+            const message = formatNoUserMessage(config.lang)
             await sendIgnoredMessage(client, sessionId, message, params, logger)
             logger.info("Sweep command: no user message found")
             return
@@ -213,7 +213,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
             mode,
             [],
             new Map(),
-            config.compress.lang,
+            config.lang,
             workingDirectory,
             skippedProtected,
         )
@@ -253,7 +253,7 @@ export async function handleSweepCommand(ctx: SweepCommandContext): Promise<void
         mode,
         newToolIds,
         toolMetadata,
-        config.compress.lang,
+        config.lang,
         workingDirectory,
         skippedProtected,
     )

@@ -158,7 +158,7 @@ function formatAvailableBlocksMessage(availableTargets: CompressionTarget[], lan
 
 export async function handleDecompressCommand(ctx: DecompressCommandContext): Promise<void> {
     const { client, state, config, logger, sessionId, messages, args } = ctx
-    const lang = config.compress.lang
+    const lang = config.lang
 
     const params = getCurrentParams(state, messages, logger)
     const targetArg = args[0]

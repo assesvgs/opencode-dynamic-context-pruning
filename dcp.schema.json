@@ -25,6 +25,33 @@
             "default": false,
             "description": "Enable debug logging"
         },
+        "lang": {
+            "type": "string",
+            "enum": ["en", "zh"],
+            "default": "en",
+            "description": "Language for command descriptions, notifications, and TUI display"
+        },
+        "summaryBuffer": {
+            "type": "boolean",
+            "default": true,
+            "description": "Summary tokens are not counted toward the context limit, effectively extending the context window"
+        },
+        "maxContextLimit": {
+            "anyOf": [
+                { "type": "number", "minimum": 0 },
+                { "type": "string", "pattern": "^\\d+(\\.\\d+)?%$" }
+            ],
+            "default": 100000,
+            "description": "Soft upper threshold. Above this, DCP keeps sending strong compression nudges (based on nudgeFrequency), so the model is pushed to compress. Accepts number or \"X%\" of the model context window."
+        },
+        "minContextLimit": {
+            "anyOf": [
+                { "type": "number", "minimum": 0 },
+                { "type": "string", "pattern": "^\\d+(\\.\\d+)?%$" }
+            ],
+            "default": 50000,
+            "description": "Soft lower threshold for reminder nudges. Below this, turn/iteration reminders are off (compression is less likely). At or above this, reminders are on. Accepts number or \"X%\" of the model context window."
+        },
         "pruneNotification": {
             "type": "string",
             "enum": ["off", "minimal", "detailed"],
@@ -246,28 +273,18 @@
                     "type": "boolean",
                     "default": false,
                     "description": "When enabled, your messages are never lost during compression"
-                },
-                "lang": {
-                    "type": "string",
-                    "enum": ["en", "zh"],
-                    "default": "en",
-                    "description": "Language for command descriptions and TUI display"
                 }
             },
             "default": {
                 "mode": "range",
                 "permission": "allow",
                 "showCompression": false,
-                "summaryBuffer": true,
-                "maxContextLimit": 100000,
-                "minContextLimit": 50000,
                 "nudgeFrequency": 5,
                 "iterationNudgeThreshold": 15,
                 "nudgeForce": "soft",
                 "protectedTools": [],
                 "protectTags": false,
-                "protectUserMessages": false,
-                "lang": "en"
+                "protectUserMessages": false
             }
         },
         "purge": {
