@@ -1,6 +1,8 @@
 # DCP — OpenCode 上下文裁剪插件
 
-自动管理 OpenCode 对话上下文，通过压缩、去重、错误清理来降低 token 消耗。
+自动管理 OpenCode 对话上下文，通过**压缩**、**去重**、**错误清理**来降低 token 消耗。
+
+---
 
 ## 安装
 
@@ -9,29 +11,31 @@
 1. 进入仓库 Actions 页面，选择最新成功的 **Build** workflow
 2. 下载 Artifact（文件名格式 `dcp-{提交哈希前8位}`）
 3. 解压到任意目录
-4. 安装到 OpenCode（项目级，保存在当前项目的 `.opencode/opencode.json`）：
+4. 安装到 OpenCode：
 
 ```bash
+# 项目级安装
 cd /path/to/your/project
 opencode plugin /path/to/dcp-xxxxxx --force
+
+# 全局安装（所有项目可用）
+opencode plugin /path/to/dcp-xxxxxx --global
 ```
 
-> 如需全局安装（用于所有项目），添加 `--global` 参数：
->
-> ```bash
-> opencode plugin /path/to/dcp-xxxxxx --global
-> ```
+### 从本地项目目录安装（Termux / ARM64）
 
-### 从本地项目目录安装（Termux / ARM64 环境）
-
-> `tsup` 在 Termux (Android ARM64) 上无法运行，需要使用 `build-local.mjs` 替代。
+`npm run build` 中的 `tsup` 在 Termux 上可能因 shebang 路径问题无法直接执行。
 
 ```bash
 git clone https://github.com/assesvgs/opencode-dynamic-context-pruning
 cd opencode-dynamic-context-pruning
 npm install
+
+# 方案 A：使用 esbuild 构建（推荐，最兼容）
 node build-local.mjs
-opencode plugin . --force
+
+# 方案 B：直接调用 tsup CLI（需 node 可执行）
+node node_modules/tsup/dist/cli-default.js
 ```
 
 标准 Linux/macOS 环境可直接使用 `npm run build`。
@@ -42,9 +46,123 @@ opencode plugin . --force
 opencode plugin @tarquinen/opencode-dcp --global
 ```
 
+---
+
+## 架构
+
+### 插件钩子系统
+
+DCP 通过 OpenCode 的插件 API 挂载了 4 个核心钩子，按执行顺序排列：
+
+```
+用户发送消息
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ command.execute.before               │ ← 斜杠命令路由
+│                                      │
+│   信息型命令（help/context/stats）     │ → 显示信息 + throw sentinel
+│   功能型命令（sweep/decompress 等）    │ → 执行操作 + throw sentinel
+│   触发型命令（compress/purge）        │ → 设置 pendingManualTrigger + return
+└──────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ experimental.chat.system.transform    │ ← 注入 DCP 系统指令
+│                                      │
+│   手动模式时添加手动触发说明           │
+│   权限 deny 时跳过                    │
+└──────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────┐
+│ experimental.chat.messages.transform  │ ← 消息变换（核心管道）
+│                                      │
+│   checkSession()        ─ 会话检测    │
+│   stripHallucinations() ─ 清理幻觉    │
+│   assignMessageRefs()   ─ 分配 ID    │
+│   syncCompressionBlocks()─ 同步块     │
+│   prune()               ─ 裁剪消息    │
+│   injectCompressNudges()─ 注入提醒    │
+│   injectMessageIds()    ─ 注入 ID    │
+│   applyPendingManualTrigger()─替换为   │
+│     prompt（compress/purge 命令路径）  │
+└──────────────────────────────────────┘
+       │
+       ▼
+       发送给 LLM
+```
+
+### 命令分类
+
+| 类别       | 命令                                | 行为                                  | LLM 是否收到 |
+| ---------- | ----------------------------------- | ------------------------------------- | ------------ |
+| **纯信息** | `help`, `context`, `stats`          | 显示信息后 throw sentinel，LLM 不处理 | ✗            |
+| **开关**   | `manual`                            | 切换模式后 throw sentinel             | ✗            |
+| **功能**   | `sweep`, `decompress`, `recompress` | 执行操作后 throw sentinel             | ✗            |
+| **触发**   | `compress`, `purge`                 | 替换用户消息为 AI prompt → `return`   | ✓（替换后）  |
+
+**sentinel 机制**：插件处理完命令后抛出 `Error("__DCP_COMMAND_HANDLED__")`，OpenCode 框架捕获此异常并终止后续处理，LLM 不会收到响应请求。compress/purge 不抛 sentinel，它们的用户消息已被替换为 prompt，需要 LLM 继续处理（调用 compress/purge 工具）。
+
+### 手动模式流程
+
+```
+/dcp-compress 强力压缩
+       │
+       ▼
+command.execute.before
+       │
+       ├─ state.pendingManualTrigger = { prompt }   ← 包含用户焦点
+       ├─ output.parts = [{ text: "/dcp-compress" }]
+       └─ return (不 throw)
+       │
+       ▼
+messages.transform → applyPendingManualTrigger()
+       │
+       ├─ 找到用户消息 → 替换文本为 prompt          ← 主路径
+       │    或
+       ├─ 找不到用户消息 → 创建合成用户消息           ← fallback
+       │
+       ▼
+LLM 收到 prompt → 调用 compress 工具
+```
+
+### 压缩管道
+
+```
+prepareSession()
+  ├─ manual mode 检查
+  ├─ 获取对话消息
+  ├─ 去重（deduplication strategy）
+  └─ 错误清理（purgeErrors strategy）
+
+resolveRanges()
+  └─ 解析 startId/endId → 确认边界
+
+对每个范围:
+  ├─ parseBlockPlaceholders() — 展开 (bN) 占位符
+  ├─ appendProtectedUserMessages() — 保留用户消息
+  ├─ appendProtectedPromptInfo() — 保留 <protect> 标签
+  └─ appendProtectedTools() — 追加保护工具输出
+
+applyCompressionState()
+  └─ 注册压缩块 → 更新状态
+
+finalizeSession()
+  └─ 持久化状态 + 发送通知
+```
+
+---
+
 ## 配置
 
-配置文件 `dcp.jsonc`，按优先级覆盖：全局 `~/.config/opencode/` → 自定义 `$OPENCODE_CONFIG_DIR/` → 项目 `.opencode/`
+配置文件 `dcp.jsonc`，按优先级覆盖：
+
+| 层级   | 路径                             |
+| ------ | -------------------------------- |
+| 项目   | `.opencode/dcp.jsonc`            |
+| 自定义 | `$OPENCODE_CONFIG_DIR/dcp.jsonc` |
+| 全局   | `~/.config/opencode/dcp.jsonc`   |
 
 ### 完整配置字段
 
@@ -73,9 +191,9 @@ opencode plugin @tarquinen/opencode-dcp --global
     // 斜杠命令配置
     // ============================================================
     "commands": {
-        // 启用 DCP 斜杠命令（/dcp-sweep、/dcp-purge 等）
+        // 启用 DCP 斜杠命令
         "enabled": true,
-        // 额外保护的工具名（内置保护：task/skill/todowrite/todoread/compress/batch/plan_enter/plan_exit/write/edit）
+        // 额外保护的工具名（内置保护见下方）
         "protectedTools": [],
     },
 
@@ -95,7 +213,6 @@ opencode plugin @tarquinen/opencode-dcp --global
     "turnProtection": {
         // 保护最近 N 轮的工具缓存不被回收
         "enabled": false,
-        // 保护轮数
         "turns": 4,
     },
 
@@ -105,7 +222,7 @@ opencode plugin @tarquinen/opencode-dcp --global
     "experimental": {
         // 允许在子代理会话中裁剪上下文
         "allowSubAgents": false,
-        // 允许用户自定义 DCP 提示词（开启后可覆盖 prompt 文件）
+        // 允许用户自定义 DCP 提示词
         "customPrompts": false,
     },
 
@@ -116,8 +233,8 @@ opencode plugin @tarquinen/opencode-dcp --global
     // 上下文压缩工具配置（核心）
     // ============================================================
     "compress": {
-        // 语言：命令描述和 TUI 面板的显示语言
-        // "en" = 英文 / "zh" = 中文
+        // 语言："en" = 英文 / "zh" = 中文
+        // 影响：命令输出文本、AI trigger prompt、TUI 面板、裁剪通知
         "lang": "en",
 
         // 压缩模式：
@@ -140,11 +257,9 @@ opencode plugin @tarquinen/opencode-dcp --global
         "summaryBuffer": true,
 
         // 上下文软上限（token 数或百分比如 "50%"）
-        // 超过此值持续注入强压缩提醒
         "maxContextLimit": 100000,
 
         // 上下文软下限（token 数或百分比如 "30%"）
-        // 低于此值关闭提醒，高于此值开启提醒
         "minContextLimit": 50000,
 
         // 按模型覆盖 maxContextLimit，键名格式 "provider/model"
@@ -163,7 +278,8 @@ opencode plugin @tarquinen/opencode-dcp --global
         "nudgeForce": "soft",
 
         // 额外保护的工具输出会追加到压缩摘要中
-        // 内置保护：task/skill/todowrite/todoread
+        // 内置保护：task/skill/todowrite/todoread/compress/batch
+        //          plan_enter/plan_exit/write/edit
         "protectedTools": [],
 
         // 保留 <protect>...</protect> 标签内容不被压缩
@@ -173,7 +289,6 @@ opencode plugin @tarquinen/opencode-dcp --global
         "protectUserMessages": false,
 
         // 允许 AI 自主调用 purge 工具进行极限清理
-        // 启用后 AI 可在认为上下文需要激进清理时自行调用 purge
         "autonomousPurge": false,
     },
 
@@ -196,84 +311,71 @@ opencode plugin @tarquinen/opencode-dcp --global
 }
 ```
 
+---
+
 ## 命令详解
 
 ### `/dcp-compress [焦点]` — 手动触发压缩
 
-**原理**：向模型注入一条提示，让模型调用 `compress` 工具。模型选择对话中已完成的章节，将其替换为高保真技术摘要。
+**原理**：注入一条 AI prompt 让模型调用 `compress` 工具。模型选择已完成的对话章节替换为技术摘要。
 
-- 压缩的内容类型：模型选定的对话范围（用户消息、助手回复、工具调用结果）
-- 受保护的内容：`protectedTools` 列表中的工具输出会追加到摘要中保留
+- 压缩内容：模型选定的对话范围（用户消息、助手回复、工具调用结果）
+- 受保护内容：`compress.protectedTools` 中的工具输出追加到摘要保留
 - 两种模式：
-    - `range` 模式：压缩连续对话范围，输出一个或多个摘要块
-    - `message` 模式：逐条压缩独立消息，更精细
-- 可选 `[焦点]` 参数指引模型压缩的重点方向
+    - `range`：压缩连续对话范围，输出一个或多个摘要块
+    - `message`：逐条压缩独立消息，更精细
+- `[焦点]` 参数：追加到 prompt 尾部指引模型压缩方向
 
 ### `/dcp-purge` — 极限清理
 
-**原理**：与 `/dcp-compress` 相同机制，但注入的提示告知模型**无任何内容限制**。模型可对每条内容独立判定：完全删除、一行摘要、或保留。
+**原理**：同 `/dcp-compress` 机制，但注入的 prompt 告知模型**无任何内容限制**。
 
-**可清理的内容（全部无豁免）：**
+可清理内容（全部无豁免）：
 
-- 工具调用输入（包括 `write`/`edit` 等敏感工具的文件内容）
-- 工具调用输出（包括 `task` 子代理结果、`skill` 技能输出）
-- 用户消息（包括 `protectedUserMessages` 开启时的保护消息）
-- 助手回复
-- 错误信息
-- 文件内容
-- 之前 `compress` 生成的摘要块
-- `<protect>` 标签内容
+- 工具调用输入（包括 `write`/`edit` 等敏感工具）
+- 工具调用输出（包括 `task` 子代理结果）
+- 用户消息（包括 `protectUserMessages` 开启时）
+- 助手回复、错误信息、文件内容
+- 之前 `compress` 生成的摘要块、`<protect>` 标签内容
 
-**模型判定规则：**
+模型判定规则：
 
-- **完全没用** → summary 写 `[purged]` → DCP 直接删除，不注入任何摘要
+- **完全没用** → `summary: [purged]` → DCP 直接删除，不注入摘要
 - **有一点用** → 一行极简摘要
 - **还在用** → 不选中该范围
 
-**注意**：此命令设计为数据销毁操作，使用前确认不再需要选中范围的内容。
-
 ### `/dcp-sweep [n]` — 清理工具输出
 
-**原理**：不涉及模型。DCP 直接标记指定工具调用的输出为"待裁剪"，下次请求时从消息中移除。
+**原理**：不涉及模型。DCP 直接标记工具输出为"待裁剪"，下次请求时移除。
 
 - 无参数：清理上次用户消息之后的所有工具输出
-- 带参数 `n`：清理最近 n 个工具调用的输出
-- 清理目标：仅工具输出内容，不涉及消息本体
-- 受保护的工具不受影响（`commands.protectedTools`）
-- 效果：被裁剪的输出替换为 `[Output removed to save context - information superseded or no longer needed]`
+- `n`：清理最近 n 个工具调用输出
+- 受保护工具不受影响（`commands.protectedTools`）
+- 被裁剪的输出替换为 `[Output removed to save context - ...]`
 
 ### `/dcp-context` — 查看上下文状态
 
-**原理**：分析当前会话的 token 分布，显示详细用量报告。
+分析当前会话的 token 分布，显示用量详情：
 
-显示内容：
-
-- 上下文总量（total / system / user / assistant / tools 分布）
-- 上下文中工具数
-- 活跃裁剪目标数
+- 上下文总量（System / User / Assistant / Tools 分布）
+- 上下文中工具数、活跃裁剪目标数
 - 已裁剪 token 数
 
 ### `/dcp-stats` — 查看统计
 
-显示 DCP 插件的累计统计数据：
+显示 DCP 累计统计数据：
 
-- 本会话节省 token、摘要大小、压缩率
-- 压缩耗时
-- 已裁剪工具数/消息数
+- 本会话节省 token、摘要大小、压缩率、压缩耗时
+- 已裁剪工具数 / 消息数
 - 所有历史会话合计统计
-- 有 DCP 历史的会话数
 
 ### `/dcp-manual [on/off]` — 切换手动模式
 
-**原理**：手动模式下 DCP 不自动向对话注入压缩提醒，但 `compress`/`purge` 工具和所有斜杠命令仍可用。
-
-- `on` — 开启手动模式
-- `off` — 关闭手动模式（恢复自动提醒）
-- 无参数 — 切换开关
+手动模式下 DCP 不自动注入压缩提醒，所有斜杠命令和 `compress`/`purge` 工具仍可用。
 
 ### `/dcp-decompress <n>` — 恢复压缩
 
-恢复指定编号的压缩块，被压缩的原始消息重新出现在上下文中。
+恢复指定编号的压缩块，原始消息重新出现在上下文中。
 
 ### `/dcp-recompress <n>` — 重新压缩
 
@@ -281,29 +383,37 @@ opencode plugin @tarquinen/opencode-dcp --global
 
 ### `/dcp-panel` — 打开设置面板
 
-打开 DCP TUI 设置面板，可查看上下文、统计、手动模式开关等信息。
+打开 DCP TUI 面板，可查看上下文、统计、手动模式开关等。
 
 ### `/dcp-help` — 帮助
 
 显示所有可用命令及其说明。
 
+---
+
 ## 工作流程
 
 ```
-# 启用手动模式（可选）
+# 1. 启用手动模式（可选）
 /dcp-manual on
 
-# 正常对话...
+# 2. 正常对话...
 
-# 上下文太大时清理工具输出
+# 3. 上下文太大时清理工具输出
 /dcp-sweep
 
-# 触发一次普通压缩
+# 4. 触发普通压缩
 /dcp-compress
 
-# 需要激进清理时
+# 5. 需要激进清理时
 /dcp-purge
+
+# 6. 查看状态和统计
+/dcp-context
+/dcp-stats
 ```
+
+---
 
 ## 提示词覆盖
 
@@ -323,6 +433,8 @@ opencode plugin @tarquinen/opencode-dcp --global
 1. `.opencode/dcp-prompts/overrides/`（项目）
 2. `$OPENCODE_CONFIG_DIR/dcp-prompts/overrides/`（自定义）
 3. `~/.config/opencode/dcp-prompts/overrides/`（全局）
+
+---
 
 ## License
 

@@ -149,7 +149,6 @@ export function createChatMessageTransformHandler(
         )
         injectMessageIds(state, config, output.messages, compressionPriorities)
         applyPendingManualTrigger(state, output.messages, logger)
-        applyCommandCleanup(state, output.messages)
         stripStaleMetadata(output.messages)
 
         if (state.sessionId) {
@@ -232,14 +231,12 @@ export function createCommandExecuteHandler(
 
             if (subcommand === "context") {
                 await handleContextCommand(commandCtx)
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             if (subcommand === "stats") {
                 await handleStatsCommand(commandCtx)
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             if (subcommand === "sweep") {
@@ -248,14 +245,12 @@ export function createCommandExecuteHandler(
                     args: subArgs,
                     workingDirectory,
                 })
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             if (subcommand === "manual") {
                 await handleManualToggleCommand(commandCtx, subArgs[0]?.toLowerCase())
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             if (subcommand === "purge") {
@@ -300,8 +295,7 @@ export function createCommandExecuteHandler(
                     ...commandCtx,
                     args: subArgs,
                 })
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             if (subcommand === "recompress") {
@@ -309,35 +303,11 @@ export function createCommandExecuteHandler(
                     ...commandCtx,
                     args: subArgs,
                 })
-                state.ignoredCommandSession = input.sessionID
-                return
+                throw new Error("__DCP_COMMAND_HANDLED__")
             }
 
             await handleHelpCommand(commandCtx)
-            state.ignoredCommandSession = input.sessionID
-            return
-        }
-    }
-}
-
-const DCP_IGNORED_PATTERNS = [
-    /^\/dcp-(context|stats|help|sweep|manual|decompress|recompress)$/i,
-]
-
-function applyCommandCleanup(state: SessionState, messages: WithParts[]): void {
-    const sessionId = state.ignoredCommandSession
-    if (!sessionId) return
-    state.ignoredCommandSession = null
-
-    for (const msg of messages) {
-        if (msg.info.role !== "user" || msg.info.sessionID !== sessionId) continue
-        for (const part of msg.parts) {
-            if (part.type === "text" && !(part as any).synthetic && !(part as any).ignored) {
-                const text = (part.text || "").trim()
-                if (DCP_IGNORED_PATTERNS.some((p) => p.test(text))) {
-                    ;(part as any).ignored = true
-                }
-            }
+            throw new Error("__DCP_COMMAND_HANDLED__")
         }
     }
 }

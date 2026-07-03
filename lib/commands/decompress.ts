@@ -1,11 +1,13 @@
 import type { Logger } from "../logger"
 import type { CompressionBlock, PruneMessagesState, SessionState, WithParts } from "../state"
+import type { PluginConfig } from "../config"
 import { syncCompressionBlocks } from "../messages"
 import { parseBlockRef } from "../message-ids"
 import { getCurrentParams } from "../token-utils"
 import { saveSessionState } from "../state/persistence"
 import { sendIgnoredMessage } from "../ui/notification"
 import { formatTokenCount } from "../ui/utils"
+import { t, type Lang } from "../i18n"
 import {
     getActiveCompressionTargets,
     resolveCompressionTarget,
@@ -15,6 +17,7 @@ import {
 export interface DecompressCommandContext {
     client: any
     state: SessionState
+    config: PluginConfig
     logger: Logger
     sessionId: string
     messages: WithParts[]
@@ -98,10 +101,11 @@ function formatDecompressMessage(
     restoredMessageCount: number,
     restoredTokens: number,
     reactivatedBlockIds: number[],
+    lang: Lang,
 ): string {
     const lines: string[] = []
 
-    lines.push(`Restored compression ${target.displayId}.`)
+    lines.push(t("DCP Decompress #{id}.", lang).replace("{id}", String(target.displayId)))
     if (target.runId !== target.displayId || target.grouped) {
         lines.push(`Tool call label: Compression #${target.runId}.`)
     }
@@ -112,27 +116,29 @@ function formatDecompressMessage(
 
     if (restoredMessageCount > 0) {
         lines.push(
-            `Restored ${restoredMessageCount} message(s) (~${formatTokenCount(restoredTokens)}).`,
+            t("Restored {n} message(s) (~{tokens})", lang)
+                .replace("{n}", String(restoredMessageCount))
+                .replace("{tokens}", formatTokenCount(restoredTokens)),
         )
     } else {
-        lines.push("No messages were restored.")
+        lines.push(t("No messages were restored.", lang))
     }
 
     return lines.join("\n")
 }
 
-function formatAvailableBlocksMessage(availableTargets: CompressionTarget[]): string {
+function formatAvailableBlocksMessage(availableTargets: CompressionTarget[], lang: Lang): string {
     const lines: string[] = []
 
-    lines.push("Usage: /dcp decompress <n>")
+    lines.push(`${t("Usage", lang)}: /dcp decompress <n>`)
     lines.push("")
 
     if (availableTargets.length === 0) {
-        lines.push("No compressions are available to restore.")
+        lines.push(t("No compression blocks found.", lang))
         return lines.join("\n")
     }
 
-    lines.push("Available compressions:")
+    lines.push(t("Available blocks:", lang))
     const entries = availableTargets.map((target) => {
         const topic = target.topic.replace(/\s+/g, " ").trim() || "(no topic)"
         const label = `${target.displayId} (${formatTokenCount(target.compressedTokens)})`
@@ -151,7 +157,8 @@ function formatAvailableBlocksMessage(availableTargets: CompressionTarget[]): st
 }
 
 export async function handleDecompressCommand(ctx: DecompressCommandContext): Promise<void> {
-    const { client, state, logger, sessionId, messages, args } = ctx
+    const { client, state, config, logger, sessionId, messages, args } = ctx
+    const lang = config.compress.lang
 
     const params = getCurrentParams(state, messages, logger)
     const targetArg = args[0]
@@ -172,7 +179,7 @@ export async function handleDecompressCommand(ctx: DecompressCommandContext): Pr
 
     if (!targetArg) {
         const availableTargets = getActiveCompressionTargets(messagesState)
-        const message = formatAvailableBlocksMessage(availableTargets)
+        const message = formatAvailableBlocksMessage(availableTargets, lang)
         await sendIgnoredMessage(client, sessionId, message, params, logger)
         return
     }
@@ -262,6 +269,7 @@ export async function handleDecompressCommand(ctx: DecompressCommandContext): Pr
         restoredMessageCount,
         restoredTokens,
         reactivatedBlockIds,
+        lang,
     )
     await sendIgnoredMessage(client, sessionId, message, params, logger)
 

@@ -30,13 +30,22 @@ const COMPRESS_TRIGGER_PROMPT = [
     "Return after compress with a brief explanation of what content was compressed.",
 ].join("\n\n")
 
+const ZH_COMPRESS_TRIGGER_PROMPT = [
+    "<手动触发压缩>",
+    "手动模式已触发。你现在必须使用压缩工具。",
+    "查找最重要的已完成对话内容，将其压缩为高保真的技术摘要。",
+    "遵循当前的压缩模式，保留所有关键的实现细节，选择安全的压缩目标。",
+    "压缩完成后，简要说明压缩了哪些内容。",
+].join("\n\n")
+
 function getTriggerPrompt(
     tool: "compress",
     state: SessionState,
     config: PluginConfig,
     userFocus?: string,
 ): string {
-    const base = COMPRESS_TRIGGER_PROMPT
+    const lang = config.compress.lang
+    const base = lang === "zh" ? ZH_COMPRESS_TRIGGER_PROMPT : COMPRESS_TRIGGER_PROMPT
     const compressedBlockGuidance =
         config.compress.mode === "message" ? "" : buildCompressedBlockGuidance(state)
 

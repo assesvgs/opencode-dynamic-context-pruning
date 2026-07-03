@@ -9,6 +9,7 @@ import {
 import { ToolParameterEntry } from "../state"
 import { PluginConfig } from "../config"
 import { getActiveSummaryTokenUsage } from "../state/utils"
+import { t, tn, type Lang } from "../i18n"
 
 export type PruneReason = "completion" | "noise" | "extraction"
 export const PRUNE_REASON_LABELS: Record<PruneReason, string> = {
@@ -24,8 +25,12 @@ interface CompressionNotificationEntry {
     summaryTokens: number
 }
 
-function buildMinimalMessage(state: SessionState, reason: PruneReason | undefined): string {
-    const reasonSuffix = reason ? ` — ${PRUNE_REASON_LABELS[reason]}` : ""
+function buildMinimalMessage(
+    state: SessionState,
+    reason: PruneReason | undefined,
+    lang: Lang,
+): string {
+    const reasonSuffix = reason ? ` — ${t(PRUNE_REASON_LABELS[reason], lang)}` : ""
     return (
         formatStatsHeader(state.stats.totalPruneTokens, state.stats.pruneTokenCounter) +
         reasonSuffix
@@ -38,13 +43,14 @@ function buildDetailedMessage(
     pruneToolIds: string[],
     toolMetadata: Map<string, ToolParameterEntry>,
     workingDirectory: string,
+    lang: Lang,
 ): string {
     let message = formatStatsHeader(state.stats.totalPruneTokens, state.stats.pruneTokenCounter)
 
     if (pruneToolIds.length > 0) {
         const pruneTokenCounterStr = `~${formatTokenCount(state.stats.pruneTokenCounter)}`
-        const reasonLabel = reason ? ` — ${PRUNE_REASON_LABELS[reason]}` : ""
-        message += `\n\n▣ Pruning (${pruneTokenCounterStr})${reasonLabel}`
+        const reasonLabel = reason ? ` — ${t(PRUNE_REASON_LABELS[reason], lang)}` : ""
+        message += `\n\n▣ ${t("Pruned:", lang)} ${pruneTokenCounterStr}${reasonLabel}`
 
         const itemLines = formatPrunedItemsList(pruneToolIds, toolMetadata, workingDirectory)
         message += "\n" + itemLines.join("\n")
@@ -110,10 +116,18 @@ export async function sendUnifiedNotification(
         return false
     }
 
+    const lang = config.compress.lang
     const message =
         config.pruneNotification === "minimal"
-            ? buildMinimalMessage(state, reason)
-            : buildDetailedMessage(state, reason, pruneToolIds, toolMetadata, workingDirectory)
+            ? buildMinimalMessage(state, reason, lang)
+            : buildDetailedMessage(
+                  state,
+                  reason,
+                  pruneToolIds,
+                  toolMetadata,
+                  workingDirectory,
+                  lang,
+              )
 
     if (config.pruneNotificationType === "toast") {
         let toastMessage = truncateExtractedSection(message)
@@ -122,7 +136,7 @@ export async function sendUnifiedNotification(
 
         await client.tui.showToast({
             body: {
-                title: "DCP: Compress Notification",
+                title: t("DCP: Compress Notification", lang),
                 message: toastMessage,
                 variant: "info",
                 duration: 5000,
@@ -138,6 +152,7 @@ export async function sendUnifiedNotification(
 function buildCompressionSummary(
     entries: CompressionNotificationEntry[],
     state: SessionState,
+    lang: Lang,
 ): string {
     if (entries.length === 1) {
         return entries[0]?.summary ?? ""
@@ -146,25 +161,30 @@ function buildCompressionSummary(
     return entries
         .map((entry) => {
             const topic =
-                state.prune.messages.blocksById.get(entry.blockId)?.topic ?? "(unknown topic)"
+                state.prune.messages.blocksById.get(entry.blockId)?.topic ??
+                t("(unknown topic)", lang)
             return `### ${topic}\n${entry.summary}`
         })
         .join("\n\n")
 }
 
-function getCompressionLabel(entries: CompressionNotificationEntry[]): string {
+function getCompressionLabel(entries: CompressionNotificationEntry[], lang: Lang): string {
     const runId = entries[0]?.runId
     if (runId === undefined) {
-        return "Compression"
+        return t("Compression", lang)
     }
 
-    return `Compression #${runId}`
+    return `${t("Compression", lang)} #${runId}`
 }
 
-function formatCompressionMetrics(removedTokens: number, summaryTokens: number): string {
-    const metrics = [`-${formatTokenCount(removedTokens, true)} removed`]
+function formatCompressionMetrics(
+    removedTokens: number,
+    summaryTokens: number,
+    lang: Lang,
+): string {
+    const metrics = [`-${formatTokenCount(removedTokens, true)} ${t("removed", lang)}`]
     if (summaryTokens > 0) {
-        metrics.push(`+${formatTokenCount(summaryTokens, true)} summary`)
+        metrics.push(`+${formatTokenCount(summaryTokens, true)} ${t("summary", lang)}`)
     }
     return metrics.join(", ")
 }
@@ -188,9 +208,10 @@ export async function sendCompressNotification(
         return false
     }
 
+    const lang: Lang = config.compress.lang
     let message: string
-    const compressionLabel = getCompressionLabel(entries)
-    const summary = buildCompressionSummary(entries, state)
+    const compressionLabel = getCompressionLabel(entries, lang)
+    const summary = buildCompressionSummary(entries, state, lang)
     const summaryTokens = entries.reduce((total, entry) => total + entry.summaryTokens, 0)
     const summaryTokensStr = formatTokenCount(summaryTokens)
     const compressedTokens = entries.reduce((total, entry) => {
@@ -238,12 +259,11 @@ export async function sendCompressNotification(
         batchTopic ??
         (entries.length === 1
             ? (state.prune.messages.blocksById.get(entries[0]?.blockId ?? -1)?.topic ??
-              "(unknown topic)")
-            : "(unknown topic)")
-
+              t("(unknown topic)", lang))
+            : t("(unknown topic)", lang))
     const totalActiveSummaryTkns = getActiveSummaryTokenUsage(state)
     const totalGross = state.stats.totalPruneTokens + state.stats.pruneTokenCounter
-    const notificationHeader = `▣ DCP | ${formatCompressionMetrics(totalGross, totalActiveSummaryTkns)}`
+    const notificationHeader = `▣ DCP | ${formatCompressionMetrics(totalGross, totalActiveSummaryTkns, lang)}`
 
     if (config.pruneNotification === "minimal") {
         message = `${notificationHeader} — ${compressionLabel}`
@@ -263,16 +283,16 @@ export async function sendCompressNotification(
             50,
         )
         message += `\n\n${progressBar}`
-        message += `\n▣ ${compressionLabel} ${formatCompressionMetrics(compressedTokens, summaryTokens)}`
-        message += `\n→ Topic: ${topic}`
-        message += `\n→ Items: ${newlyCompressedMessageIds.length} messages`
+        message += `\n▣ ${compressionLabel} ${formatCompressionMetrics(compressedTokens, summaryTokens, lang)}`
+        message += `\n${t("→ Topic:", lang)} ${topic}`
+        message += `\n${t("→ Items:", lang)} ${newlyCompressedMessageIds.length} ${t("messages", lang)}`
         if (newlyCompressedToolIds.length > 0) {
-            message += ` and ${newlyCompressedToolIds.length} tools compressed`
+            message += ` ${tn("and {n} tools compressed", lang, newlyCompressedToolIds.length)}`
         } else {
-            message += ` compressed`
+            message += ` ${t("compressed", lang)}`
         }
         if (config.compress.showCompression) {
-            message += `\n→ Compression (~${summaryTokensStr}): ${summary}`
+            message += `\n${t("→ Compression", lang)} (~${summaryTokensStr}): ${summary}`
         }
     }
 
@@ -282,8 +302,8 @@ export async function sendCompressNotification(
             const truncatedSummary = truncateToastSummary(summary)
             if (truncatedSummary !== summary) {
                 toastMessage = toastMessage.replace(
-                    `\n→ Compression (~${summaryTokensStr}): ${summary}`,
-                    `\n→ Compression (~${summaryTokensStr}): ${truncatedSummary}`,
+                    `\n${t("→ Compression", lang)} (~${summaryTokensStr}): ${summary}`,
+                    `\n${t("→ Compression", lang)} (~${summaryTokensStr}): ${truncatedSummary}`,
                 )
             }
         }
@@ -292,7 +312,7 @@ export async function sendCompressNotification(
 
         await client.tui.showToast({
             body: {
-                title: "DCP: Compress Notification",
+                title: t("DCP: Compress Notification", lang),
                 message: toastMessage,
                 variant: "info",
                 duration: 5000,

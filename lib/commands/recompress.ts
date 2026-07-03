@@ -1,11 +1,13 @@
 import type { Logger } from "../logger"
 import type { PruneMessagesState, SessionState, WithParts } from "../state"
+import type { PluginConfig } from "../config"
 import { syncCompressionBlocks } from "../messages"
 import { parseBlockRef } from "../message-ids"
 import { getCurrentParams } from "../token-utils"
 import { saveSessionState } from "../state/persistence"
 import { sendIgnoredMessage } from "../ui/notification"
 import { formatTokenCount } from "../ui/utils"
+import { t, type Lang } from "../i18n"
 import {
     getRecompressibleCompressionTargets,
     resolveCompressionTarget,
@@ -15,6 +17,7 @@ import {
 export interface RecompressCommandContext {
     client: any
     state: SessionState
+    config: PluginConfig
     logger: Logger
     sessionId: string
     messages: WithParts[]
@@ -51,10 +54,11 @@ function formatRecompressMessage(
     recompressedMessageCount: number,
     recompressedTokens: number,
     deactivatedBlockIds: number[],
+    lang: Lang,
 ): string {
     const lines: string[] = []
 
-    lines.push(`Re-applied compression ${target.displayId}.`)
+    lines.push(t("DCP Recompress #{id}.", lang).replace("{id}", String(target.displayId)))
     if (target.runId !== target.displayId || target.grouped) {
         lines.push(`Tool call label: Compression #${target.runId}.`)
     }
@@ -65,27 +69,29 @@ function formatRecompressMessage(
 
     if (recompressedMessageCount > 0) {
         lines.push(
-            `Re-compressed ${recompressedMessageCount} message(s) (~${formatTokenCount(recompressedTokens)}).`,
+            t("Re-compressed {n} message(s) (~{tokens})", lang)
+                .replace("{n}", String(recompressedMessageCount))
+                .replace("{tokens}", formatTokenCount(recompressedTokens)),
         )
     } else {
-        lines.push("No messages were re-compressed.")
+        lines.push(t("No messages were re-compressed.", lang))
     }
 
     return lines.join("\n")
 }
 
-function formatAvailableBlocksMessage(availableTargets: CompressionTarget[]): string {
+function formatAvailableBlocksMessage(availableTargets: CompressionTarget[], lang: Lang): string {
     const lines: string[] = []
 
-    lines.push("Usage: /dcp recompress <n>")
+    lines.push(`${t("Usage", lang)}: /dcp recompress <n>`)
     lines.push("")
 
     if (availableTargets.length === 0) {
-        lines.push("No user-decompressed blocks are available to re-compress.")
+        lines.push(t("No compression available.", lang))
         return lines.join("\n")
     }
 
-    lines.push("Available user-decompressed compressions:")
+    lines.push(t("Recompress blocks:", lang))
     const entries = availableTargets.map((target) => {
         const topic = target.topic.replace(/\s+/g, " ").trim() || "(no topic)"
         const label = `${target.displayId} (${formatTokenCount(target.compressedTokens)})`
@@ -104,7 +110,8 @@ function formatAvailableBlocksMessage(availableTargets: CompressionTarget[]): st
 }
 
 export async function handleRecompressCommand(ctx: RecompressCommandContext): Promise<void> {
-    const { client, state, logger, sessionId, messages, args } = ctx
+    const { client, state, config, logger, sessionId, messages, args } = ctx
+    const lang = config.compress.lang
 
     const params = getCurrentParams(state, messages, logger)
     const targetArg = args[0]
@@ -129,7 +136,7 @@ export async function handleRecompressCommand(ctx: RecompressCommandContext): Pr
             messagesState,
             availableMessageIds,
         )
-        const message = formatAvailableBlocksMessage(availableTargets)
+        const message = formatAvailableBlocksMessage(availableTargets, lang)
         await sendIgnoredMessage(client, sessionId, message, params, logger)
         return
     }
@@ -211,6 +218,7 @@ export async function handleRecompressCommand(ctx: RecompressCommandContext): Pr
         recompressedMessageCount,
         recompressedTokens,
         deactivatedBlockIds,
+        lang,
     )
     await sendIgnoredMessage(client, sessionId, message, params, logger)
 
