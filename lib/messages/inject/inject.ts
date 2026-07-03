@@ -28,6 +28,7 @@ import {
     getIterationNudgeThreshold,
     getNudgeFrequency,
     getModelInfo,
+    injectAnchoredNudge,
     isContextOverLimits,
 } from "./utils"
 
@@ -53,7 +54,7 @@ export const injectPurgeNudges = (
     const { overMaxLimit } = isContextOverLimits(config, state, providerId, modelId, messages)
     if (!overMaxLimit) return
 
-    const interval = Math.max(1, Math.floor(config.purge.nudgeFrequency || 1))
+    const interval = Math.max(1, Math.floor(config.purge.nudgeFrequency ?? 1))
     const lastMessage = findLastNonIgnoredMessage(messages)
     if (!lastMessage) return
 
@@ -66,10 +67,7 @@ export const injectPurgeNudges = (
     )
     if (!added) return
 
-    const nudgeText = prompts.purgeNudge
-    if (!nudgeText.trim()) return
-
-    appendToLastTextPart(lastAssistantMessage, nudgeText)
+    injectAnchoredNudge(lastAssistantMessage, prompts.purgeNudge)
     void saveSessionState(state, logger)
 }
 
@@ -96,6 +94,7 @@ export const injectCompressNudges = (
         state.nudges.contextLimitAnchors.clear()
         state.nudges.turnNudgeAnchors.clear()
         state.nudges.iterationNudgeAnchors.clear()
+        state.nudges.purgeNudgeAnchors.clear()
         void saveSessionState(state, logger)
         return
     }

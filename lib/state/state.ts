@@ -194,6 +194,7 @@ export async function ensureSessionInitialized(
     state.nudges.iterationNudgeAnchors = new Set<string>(
         persisted.nudges.iterationNudgeAnchors || [],
     )
+    state.nudges.purgeNudgeAnchors = new Set<string>(persisted.nudges.purgeNudgeAnchors || [])
     state.stats = {
         pruneTokenCounter: persisted.stats?.pruneTokenCounter || 0,
         totalPruneTokens: persisted.stats?.totalPruneTokens || 0,

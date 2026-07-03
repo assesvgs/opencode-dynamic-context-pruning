@@ -5,7 +5,8 @@ import { assignMessageRefs } from "../message-ids"
 import { isIgnoredUserMessage } from "../messages/query"
 import { deduplicate, purgeErrors } from "../strategies"
 import { getCurrentParams, getCurrentTokenUsage } from "../token-utils"
-import { sendCompressNotification, sendPurgeNotification } from "../ui/notification"
+import { sendCompressNotification, sendIgnoredMessage } from "../ui/notification"
+import { t, tn, type Lang } from "../i18n"
 import type { ToolContext } from "./types"
 import { buildSearchContext, fetchSessionMessages } from "./search"
 import type { SearchContext } from "./types"
@@ -32,6 +33,34 @@ export interface NotificationEntry {
 export interface PreparedSession {
     rawMessages: WithParts[]
     searchContext: SearchContext
+}
+
+async function sendLocalPurgeNotification(
+    ctx: ToolContext,
+    toolCtx: RunContext,
+    batchTopic: string | undefined,
+    pendingCount: number,
+    params: any,
+): Promise<void> {
+    if (ctx.config.pruneNotification === "off") return
+
+    const lang = ctx.config.lang as Lang
+    const msg =
+        `▣ DCP | ${t("Purge", lang)}${batchTopic ? ` — ${batchTopic}` : ""}` +
+        `\n${t("→ Items:", lang)} ${tn("{n} ranges purged", lang, pendingCount)}`
+
+    if (ctx.config.pruneNotificationType === "toast") {
+        await ctx.client.tui.showToast({
+            body: {
+                title: t("DCP: Purge Notification", lang),
+                message: msg,
+                variant: "info",
+                duration: 5000,
+            },
+        })
+    } else {
+        await sendIgnoredMessage(ctx.client, toolCtx.sessionID, msg, params, ctx.logger)
+    }
 }
 
 export async function prepareSession(
@@ -96,16 +125,7 @@ export async function finalizeSession(
 
     const pendingCount = ctx.state.prune.pendingReplacements?.length ?? 0
     if (pendingCount > 0) {
-        await sendPurgeNotification(
-            ctx.client,
-            ctx.logger,
-            ctx.config,
-            ctx.state,
-            toolCtx.sessionID,
-            batchTopic,
-            pendingCount,
-            params,
-        )
+        await sendLocalPurgeNotification(ctx, toolCtx, batchTopic, pendingCount, params)
     } else {
         await sendCompressNotification(
             ctx.client,

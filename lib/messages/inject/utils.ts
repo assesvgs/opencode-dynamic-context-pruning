@@ -35,7 +35,7 @@ export interface LastNonIgnoredMessage {
 }
 
 export function getNudgeFrequency(config: PluginConfig): number {
-    return Math.max(1, Math.floor(config.compress.nudgeFrequency || 1))
+    return Math.max(1, Math.floor(config.compress.nudgeFrequency ?? 1))
 }
 
 export function getIterationNudgeThreshold(config: PluginConfig): number {
@@ -204,7 +204,7 @@ function buildMessagePriorityGuidance(
     return renderMessagePriorityGuidance(priorityLabel, refs)
 }
 
-function injectAnchoredNudge(message: WithParts, nudgeText: string): void {
+export function injectAnchoredNudge(message: WithParts, nudgeText: string): void {
     if (!nudgeText.trim()) {
         return
     }

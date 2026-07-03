@@ -291,10 +291,12 @@ const applyPendingReplacements = (
         let inRange = false
         for (const msg of messages) {
             if (msg.info.id === plan.startMessageId) inRange = true
-            if (inRange) rangeMessageIds.push(msg.info.id)
-            for (const part of msg.parts || []) {
-                if (part.type === "tool" && part.callID) {
-                    rangeToolIds.push(part.callID)
+            if (inRange) {
+                rangeMessageIds.push(msg.info.id)
+                for (const part of msg.parts || []) {
+                    if (part.type === "tool" && part.callID) {
+                        rangeToolIds.push(part.callID)
+                    }
                 }
             }
             if (msg.info.id === plan.endMessageId) break
@@ -306,11 +308,11 @@ const applyPendingReplacements = (
             active: true,
             deactivatedByUser: false,
             compressedTokens: 0,
-            summaryTokens: plan.replacementText.length >> 2,
+            summaryTokens: Math.ceil(plan.replacementText.length / 4),
             durationMs: 0,
             mode: "range",
-            topic: "purge",
-            batchTopic: undefined,
+            topic: "purge", // pendingReplacements only comes from purge tool
+            batchTopic: "purge",
             startId: plan.startMessageId,
             endId: plan.endMessageId,
             anchorMessageId: plan.startMessageId,
@@ -336,6 +338,10 @@ const applyPendingReplacements = (
                 allBlockIds: [],
                 activeBlockIds: [],
             }
+            entry.activeBlockIds = entry.activeBlockIds.filter(
+                (id) => state.prune.messages.blocksById.get(id)?.active !== false,
+            )
+            entry.allBlockIds = entry.activeBlockIds.slice()
             entry.allBlockIds.push(blockId)
             entry.activeBlockIds.push(blockId)
             state.prune.messages.byMessageId.set(msgId, entry)

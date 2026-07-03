@@ -31,7 +31,9 @@ export const messageHasPurge = (message: WithParts): boolean => {
     const parts = Array.isArray(message.parts) ? message.parts : []
     return parts.some(
         (part) =>
-            part.type === "tool" && part.tool === "purge" && part.state?.status === "completed",
+            part.type === "tool" &&
+            part.tool === "purge" &&
+            (part.state?.status === "completed" || part.state?.status === "error"),
     )
 }
 
@@ -47,7 +49,9 @@ export const messageHasCompress = (message: WithParts): boolean => {
     const parts = Array.isArray(message.parts) ? message.parts : []
     return parts.some(
         (part) =>
-            part.type === "tool" && part.tool === "compress" && part.state?.status === "completed",
+            part.type === "tool" &&
+            part.tool === "compress" &&
+            (part.state?.status === "completed" || part.state?.status === "error"),
     )
 }
 

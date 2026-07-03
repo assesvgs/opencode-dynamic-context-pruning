@@ -324,9 +324,9 @@ finalizeSession()
 
 **说明：**
 
-- `lang`、`maxContextLimit`、`minContextLimit`、`summaryBuffer` 从 `compress` 下提升到配置根级，两者共享
+- `lang`、`maxContextLimit`、`minContextLimit`、`summaryBuffer` 从 `compress` 下提升到配置根级，compress 和 purge（含 nudges 和工具）共用同一组值
 - `compress.permission` 控制 compress nudge 注入和 purge 工具注册（purge 尚未完全解耦）；`compress.permission = "deny"` 时 purge 工具不可用，但 purge nudge 仍可注入
-- `purge.autonomous` 和 `purge.nudgeFrequency` 完全独立于 compress
+- `purge.autonomous` 和 `purge.nudgeFrequency` 完全独立于 compress，仅控制 purge nudge
 - `manualMode` 只阻塞 compress nudge，不阻塞 purge nudge
 
 ---
@@ -387,7 +387,7 @@ finalizeSession()
 
 ### `/dcp-manual [on/off]` — 切换手动模式
 
-手动模式下 DCP 不自动注入压缩提醒，所有斜杠命令和 `compress`/`purge` 工具仍可用。
+手动模式下 DCP 不自动注入压缩提醒（compress nudge），但 purge nudge 不受影响——若开启了 `purge.autonomous`，purge 提醒仍会自动注入。所有斜杠命令和 `compress`/`purge` 工具仍可用。
 
 ### `/dcp-decompress <n>` — 恢复压缩
 
