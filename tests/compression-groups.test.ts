@@ -55,10 +55,10 @@ function buildConfig(mode: "message" | "range"): PluginConfig {
             protectedTools: ["task"],
             protectTags: false,
             protectUserMessages: false,
-            purge: {
-                autonomous: false,
-                nudgeFrequency: 5,
-            },
+        },
+        purge: {
+            autonomous: false,
+            nudgeFrequency: 5,
         },
         strategies: {
             deduplication: {

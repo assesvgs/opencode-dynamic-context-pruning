@@ -43,10 +43,10 @@ function buildConfig(maxContextLimit: number, minContextLimit = 1): PluginConfig
             protectedTools: ["task"],
             protectTags: false,
             protectUserMessages: false,
-            purge: {
-                autonomous: false,
-                nudgeFrequency: 5,
-            },
+        },
+        purge: {
+            autonomous: false,
+            nudgeFrequency: 5,
         },
         strategies: {
             deduplication: {
