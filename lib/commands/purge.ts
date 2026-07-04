@@ -58,8 +58,8 @@ export async function handlePurgeTriggerCommand(
 
     const basePrompt = lang === "zh" ? ZH_PURGE_TRIGGER_PROMPT : PURGE_TRIGGER_PROMPT
     const sections = [basePrompt, compressedBlockGuidance]
-    if (userFocus) {
-        sections.push("", `User focus: ${userFocus}`)
+    if (userFocus && userFocus.trim().length > 0) {
+        sections.push(`Additional user focus:\n${userFocus.trim()}`)
     }
     return sections.filter(Boolean).join("\n\n")
 }
