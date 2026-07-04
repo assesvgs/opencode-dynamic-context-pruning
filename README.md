@@ -344,7 +344,7 @@ finalizeSession()
     - `message`：逐条压缩独立消息，更精细
 - `[焦点]` 参数：追加到 prompt 尾部指引模型压缩方向
 
-### `/dcp-purge` — 替换清理
+### `/dcp-purge [焦点]` — 替换清理
 
 **原理**：选中一段已完成的任务对话，将其替换为一段自包含的总结卡片。相比 `compress`，purge 压缩得更紧凑、节省更多 token。可通过 `/dcp-decompress` 恢复。
 
@@ -360,6 +360,7 @@ finalizeSession()
 - 卡片中可标注哪些工具输出已被删除，说明如何重新读取
 - 可通过 `/dcp-decompress <blockId>` 恢复原始消息
 - **与 compress 的区别**：purge 不受内容保护限制，会替换所选范围内的所有内容（无视 `protectedTools`、`protectTags`、`protectUserMessages` 设置）
+- `[焦点]` 参数：追加到 prompt 尾部指引模型清理方向
 
 ### `/dcp-sweep [n]` — 清理工具输出
 
