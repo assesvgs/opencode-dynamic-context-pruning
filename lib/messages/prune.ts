@@ -283,9 +283,8 @@ const applyPendingReplacements = (
 
     // Register blocks for persistence across turns
     // Find the purge tool call message (the origin message for syncCompressionBlocks)
-    const purgeOriginMsgId = messages.find(
-        (m) => m.info.role === "assistant" && messageHasPurge(m),
-    )?.info.id ?? ""
+    const purgeOriginMsgId =
+        messages.find((m) => m.info.role === "assistant" && messageHasPurge(m))?.info.id ?? ""
 
     for (const plan of plans) {
         const blockId = state.prune.messages.nextBlockId++
