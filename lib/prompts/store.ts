@@ -114,7 +114,7 @@ const PROMPT_DEFINITIONS: PromptDefinition[] = [
         key: "purge-nudge",
         fileName: "purge-nudge.md",
         label: "Purge Nudge",
-        description: "Nudge to use purge tool for permanent replacement of completed tasks",
+        description: "Nudge to use purge tool for aggressive compression of completed tasks",
         usage: "Injected when context is over max limit and autonomousPurge is enabled",
         runtimeField: "purgeNudge",
     },

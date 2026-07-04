@@ -1,7 +1,7 @@
 export const SYSTEM = `
 You operate in a context-constrained environment. Manage context continuously to avoid buildup and preserve retrieval quality. Efficient context management is paramount for your agentic performance.
 
-The tools you have for context management are \`compress\` and \`purge\`. \`compress\` replaces conversation content with technical summaries (reversible). \`purge\` replaces completed content with summary cards (permanent).
+The tools you have for context management are \`compress\` and \`purge\`. \`compress\` replaces conversation content with technical summaries (reversible). \`purge\` replaces completed content with summary cards (more aggressive, restorable via \`decompress\`).
 
 \`<dcp-message-id>\` and \`<dcp-system-reminder>\` tags are environment-injected metadata. Do not output them.
 

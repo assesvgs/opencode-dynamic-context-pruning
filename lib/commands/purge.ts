@@ -17,7 +17,7 @@ const PURGE_TRIGGER_PROMPT = [
     "The summary card CANNOT be empty. If a section has no value, pick a smaller range.",
     "",
     "You can also select old compressed blocks (b1, b2, etc.) to replace them.",
-    "Old blocks replaced this way are permanently deleted — this is different from compress.",
+    "Old blocks replaced this way are aggressively compressed — this is different from compress, and can be restored via decompress.",
     "",
     "Use the purge tool now. Return after with a brief explanation.",
 ].join("\n")
