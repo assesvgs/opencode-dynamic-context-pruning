@@ -4,7 +4,7 @@ import { finalizeSession, prepareSession } from "./pipeline"
 
 export function createSmartPurgeTool(ctx: ToolContext): ReturnType<typeof tool> {
     return tool({
-        description: `Replace a range of completed conversation with a self-contained summary card.`,
+        description: `Aggressive compression: replaces a range of completed conversation with a compact summary card.`,
         args: {
             topic: tool.schema.string().describe("Short label for this batch"),
             content: tool.schema

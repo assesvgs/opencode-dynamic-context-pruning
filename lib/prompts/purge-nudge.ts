@@ -1,9 +1,10 @@
 export const PURGE_NUDGE_EN = `
-Consider using the \`purge\` tool to replace completed tasks with summary cards.
-Purge is different from compress: replacements are permanent (cannot be decompressed).
+Consider using the \`purge\` tool for aggressive compression.
+Purge compresses more aggressively than \`compress\`: replacements are more compact
+but can still be restored with \`decompress\` if needed.
 `
 
 export const PURGE_NUDGE_ZH = `
-考虑使用 \`purge\` 工具将已完成的对话替换为总结卡片。
-Purge 和 compress 不同：替换是永久的（不可解压）。
+考虑使用 \`purge\` 工具进行激进压缩。
+Purge 比 \`compress\` 压缩得更紧凑，但同样可通过 \`decompress\` 恢复。
 `
