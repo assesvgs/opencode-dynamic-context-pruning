@@ -359,6 +359,7 @@ finalizeSession()
 - 选中的消息范围被替换为一段总结卡片（合成用户消息），注册为压缩块
 - 卡片中可标注哪些工具输出已被删除，说明如何重新读取
 - 可通过 `/dcp-decompress <blockId>` 恢复原始消息
+- **与 compress 的区别**：purge 不受内容保护限制，会替换所选范围内的所有内容（无视 `protectedTools`、`protectTags`、`protectUserMessages` 设置）
 
 ### `/dcp-sweep [n]` — 清理工具输出
 

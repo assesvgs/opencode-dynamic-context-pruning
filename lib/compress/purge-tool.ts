@@ -4,7 +4,7 @@ import { finalizeSession, prepareSession } from "./pipeline"
 
 export function createSmartPurgeTool(ctx: ToolContext): ReturnType<typeof tool> {
     return tool({
-        description: `Aggressive compression: replaces a range of completed conversation with a compact summary card.`,
+        description: `Aggressive compression: replaces any selected content without restriction (bypasses protected tools/tags/user messages). Use compress when protections are needed.`,
         args: {
             topic: tool.schema.string().describe("Short label for this batch"),
             content: tool.schema

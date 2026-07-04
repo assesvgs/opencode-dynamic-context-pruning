@@ -18,6 +18,7 @@ const PURGE_TRIGGER_PROMPT = [
     "",
     "You can also select old compressed blocks (b1, b2, etc.) to replace them.",
     "Old blocks replaced this way are aggressively compressed — this is different from compress, and can be restored via decompress.",
+    "Unlike compress, purge has no content restrictions: it replaces all selected content regardless of protected tools, tags, or user message settings.",
     "",
     "Use the purge tool now. Return after with a brief explanation.",
 ].join("\n")
@@ -35,6 +36,7 @@ const ZH_PURGE_TRIGGER_PROMPT = [
     "摘要卡不能为空。如果范围内没有值得保留的内容，缩小范围。",
     "",
     "也可选中旧的 (bN) 压缩块一并替换——此操作比 compress 更激进，但可通过 decompress 恢复。",
+    "与 compress 不同，purge 不受内容保护限制：会替换所选范围内的所有内容（无视 protected tools、标签保护和用户消息保护设置）。",
     "",
     "现在调用 purge 工具。完成后返回简要说明。",
 ].join("\n")
