@@ -46,7 +46,10 @@ export interface PurgeCommandContext {
     config: PluginConfig
 }
 
-export async function handlePurgeTriggerCommand(ctx: PurgeCommandContext): Promise<string> {
+export async function handlePurgeTriggerCommand(
+    ctx: PurgeCommandContext,
+    userFocus?: string,
+): Promise<string> {
     const { state, config } = ctx
     const lang = config.lang
 
@@ -55,5 +58,8 @@ export async function handlePurgeTriggerCommand(ctx: PurgeCommandContext): Promi
 
     const basePrompt = lang === "zh" ? ZH_PURGE_TRIGGER_PROMPT : PURGE_TRIGGER_PROMPT
     const sections = [basePrompt, compressedBlockGuidance]
+    if (userFocus) {
+        sections.push("", `User focus: ${userFocus}`)
+    }
     return sections.filter(Boolean).join("\n\n")
 }

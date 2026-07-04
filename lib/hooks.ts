@@ -256,7 +256,8 @@ export function createCommandExecuteHandler(
             }
 
             if (subcommand === "purge") {
-                const prompt = await handlePurgeTriggerCommand(commandCtx)
+                const userFocus = subArgs.join(" ").trim()
+                const prompt = await handlePurgeTriggerCommand(commandCtx, userFocus)
                 state.manualMode = "compress-pending"
                 state.pendingManualTrigger = {
                     sessionId: input.sessionID,
