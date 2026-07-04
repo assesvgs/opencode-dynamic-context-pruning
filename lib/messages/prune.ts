@@ -3,7 +3,7 @@ import type { Logger } from "../logger"
 import type { PluginConfig } from "../config"
 import { isMessageCompacted } from "../state/utils"
 import { createSyntheticUserMessage, replaceBlockIdsWithBlocked } from "./utils"
-import { getLastUserMessage } from "./query"
+import { getLastUserMessage, messageHasPurge } from "./query"
 import type { UserMessage } from "@opencode-ai/sdk/v2"
 
 const PRUNED_TOOL_OUTPUT_REPLACEMENT =
@@ -282,6 +282,11 @@ const applyPendingReplacements = (
     }
 
     // Register blocks for persistence across turns
+    // Find the purge tool call message (the origin message for syncCompressionBlocks)
+    const purgeOriginMsgId = messages.find(
+        (m) => m.info.role === "assistant" && messageHasPurge(m),
+    )?.info.id ?? ""
+
     for (const plan of plans) {
         const blockId = state.prune.messages.nextBlockId++
         const runId = state.prune.messages.nextRunId++
@@ -316,7 +321,7 @@ const applyPendingReplacements = (
             startId: plan.startMessageId,
             endId: plan.endMessageId,
             anchorMessageId: plan.startMessageId,
-            compressMessageId: "",
+            compressMessageId: purgeOriginMsgId,
             compressCallId: undefined,
             includedBlockIds: plan.consumedBlockIds ?? [],
             consumedBlockIds: plan.consumedBlockIds ?? [],
