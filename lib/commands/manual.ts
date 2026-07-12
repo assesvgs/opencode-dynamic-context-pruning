@@ -63,9 +63,14 @@ function getTriggerPrompt(
     userFocus?: string,
 ): string {
     const lang = config.lang
-    const base = tool === "compress"
-        ? (lang === "zh" ? ZH_COMPRESS_TRIGGER_PROMPT : COMPRESS_TRIGGER_PROMPT)
-        : (lang === "zh" ? ZH_PURGE_TRIGGER_PROMPT : PURGE_TRIGGER_PROMPT)
+    const base =
+        tool === "compress"
+            ? lang === "zh"
+                ? ZH_COMPRESS_TRIGGER_PROMPT
+                : COMPRESS_TRIGGER_PROMPT
+            : lang === "zh"
+              ? ZH_PURGE_TRIGGER_PROMPT
+              : PURGE_TRIGGER_PROMPT
     const compressedBlockGuidance =
         config.compress.mode === "message" ? "" : buildCompressedBlockGuidance(state)
 
