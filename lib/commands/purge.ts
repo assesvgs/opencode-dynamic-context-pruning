@@ -9,17 +9,17 @@ import { buildCompressedBlockGuidance } from "../prompts/extensions/nudge"
 
 const PURGE_TRIGGER_PROMPT = [
     "<purge triggered manually>",
-    "Manual mode trigger received. You must now use the purge tool — aggressive compression.",
-    "It replaces any selected content without restriction (bypasses protected tools, tags, and user message settings).",
-    "Select a range of messages that represent a completed task and replace them with a self-contained summary card.",
+    "Manual mode trigger received. Use the purge tool — aggressive compression with no content restrictions.",
+    "You may select ANY range. No content is protected: all selected messages, tools, and tags will be replaced regardless of any protection settings.",
+    "Select a range of messages and replace them with a self-contained summary card.",
     "The summary card CANNOT be empty. If a section has no value, pick a smaller range.",
     "Return after purge with a brief explanation.",
 ].join("\n\n")
 
 const ZH_PURGE_TRIGGER_PROMPT = [
     "<手动触发替换清理>",
-    "手动模式已触发。你现在必须使用 purge 工具——激进压缩模式。",
-    "Purge 不受内容保护限制：会替换所选范围内的所有内容（无视 protected tools、标签保护和用户消息保护设置）。",
+    "手动模式已触发。使用 purge 工具——无任何内容限制的激进压缩。",
+    "可以选中任何范围。没有任何内容受保护：所选范围内的所有消息、工具、标签都会被替换。",
     "选中一段已完成的任务对话，将其替换为一段自包含的总结卡片。",
     "摘要卡不能为空。如果范围内没有值得保留的内容，缩小范围。",
     "完成后返回简要说明。",
