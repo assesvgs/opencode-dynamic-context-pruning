@@ -31,6 +31,7 @@ import {
     handleHelpCommand,
     handleManualToggleCommand,
     handleManualTriggerCommand,
+    handlePurgeTriggerCommand,
     handleRecompressCommand,
     handleStatsCommand,
     handleSweepCommand,
@@ -256,7 +257,7 @@ export function createCommandExecuteHandler(
 
             if (subcommand === "purge") {
                 const userFocus = subArgs.join(" ").trim()
-                const prompt = await handleManualTriggerCommand(commandCtx, "purge", userFocus)
+                const prompt = await handlePurgeTriggerCommand(commandCtx, userFocus)
                 if (!prompt) {
                     throw new Error("__DCP_MANUAL_TRIGGER_BLOCKED__")
                 }

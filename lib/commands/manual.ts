@@ -38,39 +38,14 @@ const ZH_COMPRESS_TRIGGER_PROMPT = [
     "压缩完成后，简要说明压缩了哪些内容。",
 ].join("\n\n")
 
-const PURGE_TRIGGER_PROMPT = [
-    "<purge triggered manually>",
-    "Manual mode trigger received. You must now use the purge tool — aggressive compression.",
-    "Select a range of messages that represent a completed task and replace them with a self-contained summary card.",
-    "The summary card CANNOT be empty. If a section has no value, pick a smaller range.",
-    "Unlike compress, purge has no content restrictions: it replaces all selected content regardless of protected tools, tags, or user message settings. Use compress when protections are needed.",
-    "Return after purge with a brief explanation.",
-].join("\n\n")
-
-const ZH_PURGE_TRIGGER_PROMPT = [
-    "<手动触发替换清理>",
-    "手动模式已触发。你现在必须使用 purge 工具——激进压缩模式。",
-    "选中一段已完成的任务对话，将其替换为一段自包含的总结卡片。",
-    "摘要卡不能为空。如果范围内没有值得保留的内容，缩小范围。",
-    "与 compress 不同，purge 不受内容保护限制：会替换所选范围内的所有内容（无视 protected tools、标签保护和用户消息保护设置）。需要保护内容时请使用 compress。",
-    "完成后返回简要说明。",
-].join("\n\n")
-
 function getTriggerPrompt(
-    tool: "compress" | "purge",
+    tool: "compress",
     state: SessionState,
     config: PluginConfig,
     userFocus?: string,
 ): string {
     const lang = config.lang
-    const base =
-        tool === "compress"
-            ? lang === "zh"
-                ? ZH_COMPRESS_TRIGGER_PROMPT
-                : COMPRESS_TRIGGER_PROMPT
-            : lang === "zh"
-              ? ZH_PURGE_TRIGGER_PROMPT
-              : PURGE_TRIGGER_PROMPT
+    const base = lang === "zh" ? ZH_COMPRESS_TRIGGER_PROMPT : COMPRESS_TRIGGER_PROMPT
     const compressedBlockGuidance =
         config.compress.mode === "message" ? "" : buildCompressedBlockGuidance(state)
 
@@ -121,7 +96,7 @@ export async function handleManualToggleCommand(
 
 export async function handleManualTriggerCommand(
     ctx: ManualCommandContext,
-    tool: "compress" | "purge",
+    tool: "compress",
     userFocus?: string,
 ): Promise<string | null> {
     return getTriggerPrompt(tool, ctx.state, ctx.config, userFocus)
