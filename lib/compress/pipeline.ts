@@ -70,7 +70,11 @@ export async function prepareSession(
 ): Promise<PreparedSession> {
     await refreshManualMode(ctx.state, toolCtx.sessionID, ctx.logger, ctx.config.manualMode.enabled)
 
-    if (ctx.state.manualMode && ctx.state.manualMode !== "compress-pending") {
+    if (
+        ctx.state.manualMode &&
+        ctx.state.manualMode !== "compress-pending" &&
+        ctx.state.manualMode !== "trigger-pending"
+    ) {
         throw new Error(
             "Manual mode: compress/purge blocked. Do not retry until `<compress triggered manually>` appears in user context.",
         )

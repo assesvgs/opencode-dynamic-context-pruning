@@ -103,7 +103,7 @@ export interface Nudges {
 export interface SessionState {
     sessionId: string | null
     isSubAgent: boolean
-    manualMode: false | "active" | "compress-pending"
+    manualMode: false | "active" | "compress-pending" | "trigger-pending"
     compressPermission: "ask" | "allow" | "deny" | undefined
     pendingManualTrigger: PendingManualTrigger | null
     prune: Prune

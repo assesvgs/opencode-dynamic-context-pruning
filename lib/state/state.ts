@@ -212,7 +212,7 @@ export async function refreshManualMode(
     logger: Logger,
     manualModeDefault: boolean,
 ): Promise<void> {
-    if (state.manualMode === "compress-pending") {
+    if (state.manualMode === "compress-pending" || state.manualMode === "trigger-pending") {
         return
     }
 

@@ -262,7 +262,7 @@ export function createCommandExecuteHandler(
                     throw new Error("__DCP_MANUAL_TRIGGER_BLOCKED__")
                 }
 
-                state.manualMode = "compress-pending"
+                state.manualMode = "trigger-pending"
                 state.pendingManualTrigger = {
                     sessionId: input.sessionID,
                     prompt,
